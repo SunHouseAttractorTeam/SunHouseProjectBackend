@@ -5,7 +5,7 @@ module.exports = {
     rootPath,
     uploadPath: path.join(rootPath, "public/uploads"),
     mongo: {
-        db: 'mongodb://localhost/',
+        db: 'mongodb://localhost/sun_house_db',
         options: {useNewUrlParser: true},
     }
 };
