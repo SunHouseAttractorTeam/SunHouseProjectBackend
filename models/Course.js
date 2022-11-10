@@ -6,24 +6,23 @@ const  CourseSchema = new Schema({
     title: {
         type: String,
         required: true,
-        unique: true,
     },
     description: {
         type: String,
         required: true,
     },
     // favorites: [{type: mongoose.Schema.Types.ObjectId, ref: 'Course'}],
-    rating: [{
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        },
-        value: {
-            type: Number,
-            min: 0,
-            max: 5,
-        },
-    }],
+    // rating: [{
+    //     user: {
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         ref: 'User'
+    //     },
+    //     value: {
+    //         type: Number,
+    //         min: 0,
+    //         max: 5,
+    //     },
+    // }],
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -53,10 +52,6 @@ const  CourseSchema = new Schema({
         required: true,
     },
 });
-
-
-///////// нужно ли делать привязку студентов к курсу? так же преподавателя - это сам юзер, который владеет самим курсом?
-
 
 CourseSchema.plugin(uniqueValidator, { message: 'Error, expected {PATH} to be unique'});
 const Course = mongoose.model('Course', CourseSchema);
