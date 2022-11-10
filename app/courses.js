@@ -107,7 +107,7 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async(req, res) => {
     try {
         const course = await Course.findById(courseId);
 
-        if((course.user._id === req.user) || (req.user.role === 'admin')) {
+        if((course.user._id === req.user._id) || (req.user.role === 'admin')) {
             const response = await Course.deleteOne({_id: courseId});
 
             if( response['deletedCount']) {
