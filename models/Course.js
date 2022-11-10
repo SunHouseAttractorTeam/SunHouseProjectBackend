@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
 const Schema = mongoose.Schema;
 
 const  CourseSchema = new Schema({
@@ -11,7 +10,10 @@ const  CourseSchema = new Schema({
         type: String,
         required: true,
     },
-    // favorites: [{type: mongoose.Schema.Types.ObjectId, ref: 'Course'}],
+    educationProgram: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'EducationProgram',
+    }],
     // rating: [{
     //     user: {
     //         type: mongoose.Schema.Types.ObjectId,
@@ -25,23 +27,13 @@ const  CourseSchema = new Schema({
     // }],
     user: {
         type: mongoose.Schema.Types.ObjectId,
+        required: true,
         ref: 'User'
     },
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
     },
-    tests: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Test',
-    }],
-
-    //if test will be uploads
-
-    // tests: [{
-    //     type: String,
-    // }],
-
     price: {
         type: Number,
         required: true,
@@ -53,7 +45,6 @@ const  CourseSchema = new Schema({
     },
 });
 
-CourseSchema.plugin(uniqueValidator, { message: 'Error, expected {PATH} to be unique'});
 const Course = mongoose.model('Course', CourseSchema);
 
 module.exports = Course;
