@@ -26,4 +26,19 @@ router.get('/', async(req, res) => {
     }
 });
 
+router.get('/:id', async(req, res) => {
+    try {
+        const course = await Course.findById(req.params.id);
+
+        if (!course) {
+            res.status(404).send({message: 'Course not found!'});
+        }
+
+        res.send(course);
+    } catch (e) {
+        res.sendStatus(500);
+    }
+});
+
+// router.post('/',)
 module.exports = router;
