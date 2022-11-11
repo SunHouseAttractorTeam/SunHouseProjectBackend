@@ -18,9 +18,9 @@ router.get('/', async(req, res) => {
             .populate('category', 'title')
             .populate('user', );
 
-        res.send(courses);
+       return res.send(courses);
     } catch (e) {
-     res.sendStatus(500);
+       return  res.sendStatus(500);
     }
 });
 
@@ -32,9 +32,9 @@ router.get('/:id', async(req, res) => {
             res.status(404).send({message: 'Course not found!'});
         }
 
-        res.send(course);
+        return res.send(course);
     } catch (e) {
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 });
 
@@ -58,9 +58,9 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
         const course = new Course(courseData);
         await course.save();
 
-        res.send(course);
+        return res.send(course);
     } catch (e) {
-        res.status(400).send(e);
+        return res.status(400).send(e);
     }
 });
 
@@ -95,9 +95,9 @@ router.put('/:id', auth, permit('teacher'), async(req,  res) => {
         const updateCourse = await Course
             .findOneAndUpdate(req.params.id, courseData);
 
-        res.send(updateCourse);
+        return res.send(updateCourse);
     }  catch (e) {
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 });
 
@@ -117,9 +117,9 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async(req, res) => {
             }
         }
 
-        res.status(401).send({message: 'Wrong token!'});
+        return res.status(401).send({message: 'Wrong token!'});
     } catch (e) {
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 });
 
