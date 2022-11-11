@@ -17,7 +17,7 @@ router.get('/:id',async (req, res) => {
         const findCategory = await Category.findById(req.params.id);
 
         if (!findCategory) {
-            res.status(404).send({message: 'Category not found!'});
+           return res.status(404).send({message: 'Category not found!'});
         }
 
         res.send(findCategory);
@@ -49,7 +49,7 @@ router.post('/',  auth, async (req, res) => {
     }
 });
 
-router.put('/update/:id', auth, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
     try {
         const {title, description} = req.body;
 
@@ -65,7 +65,7 @@ router.put('/update/:id', auth, async (req, res) => {
         const category = await Category.findById(req.params.id);
 
         if (!category) {
-            res.status(404).send({message: 'Category not found!'});
+           return res.status(404).send({message: 'Category not found!'});
         }
 
         const updateCategory = await Category
@@ -76,12 +76,12 @@ router.put('/update/:id', auth, async (req, res) => {
     }
 });
 
-router.delete('/delete/:id', auth, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
 
         if (!category) {
-            res.status(404).send({message: 'Category not found!'});
+           return res.status(404).send({message: 'Category not found!'});
         }
 
         const deleteCategory = await Category
