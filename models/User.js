@@ -85,3 +85,6 @@ UserSchema.set('toJSON', {
 UserSchema.methods.checkPassword = function (password) {
     return bcrypt.compare(password, this.password);
 };
+
+const User = mongoose.model('User', UserSchema);
+module.exports = User;
