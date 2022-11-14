@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node fixtures.js"
+    "seed": "node fixtures.js",
+    "lint:js": "eslint . --ext .js",
+    "lint:js:fix": "eslint . --ext js --fix",
+    "lint:all": "yarn lint:css && yarn lint:js"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +26,14 @@
     "nanoid": "^3.3.4"
   },
   "devDependencies": {
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-plugin-flowtype": "^5.2.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "prettier": "^2.2.1"
   }
 }
