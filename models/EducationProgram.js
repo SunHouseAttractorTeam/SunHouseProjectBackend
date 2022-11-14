@@ -1,24 +1,24 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose')
 
+const { Schema } = mongoose
 
 const EducationProgramSchema = new Schema({
-    title: {
-        type: String,
-        required: true,
-    },
-    description: {
-        type: String
-    },
-    video: {
-        type: String,
-    },
-    tests: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Test',
-    },
-});
+  title: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+  },
+  video: {
+    type: String,
+  },
+  tests: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Test',
+  },
+})
 
-const EducationProgram = mongoose.model('EducationProgram', EducationProgramSchema);
+const EducationProgram = mongoose.model('EducationProgram', EducationProgramSchema)
 
-module.exports = EducationProgram;
+module.exports = EducationProgram
