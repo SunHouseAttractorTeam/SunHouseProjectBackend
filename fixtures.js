@@ -10,9 +10,9 @@ const run = async () => {
 
   const collections = await mongoose.connection.db.listCollections().toArray()
 
-  collections.map(async coll => {
+  for (const coll of collections) {
     await mongoose.connection.db.dropCollection(coll.name)
-  })
+  }
 
   await User.create(
     {
@@ -71,10 +71,6 @@ const run = async () => {
       title: 'UX-UI дизайнер',
       description: `дизайнер изучает потребности пользователей, 
       разрабатывает логические схемы работы интерфейса и тестирует их на целевой аудитории`,
-    },
-    {
-      title: 'Admin',
-      description: 'admin@gmail.com',
     },
   )
 
