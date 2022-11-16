@@ -10,9 +10,9 @@ const run = async () => {
 
   const collections = await mongoose.connection.db.listCollections().toArray()
 
-  for (const coll of collections) {
-    await mongoose.connection.db.dropCollection(coll.name)
-  }
+  collections.forEach(coll => {
+    mongoose.connection.db.dropCollection(coll.name)
+  })
 
   await User.create(
     {
