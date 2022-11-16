@@ -12,7 +12,12 @@ router.get('/', async (req, res) => {
   if (req.query.category) query.category = req.query.category
 
   try {
-    const courses = await Course.find(query).sort().populate('category', 'title').populate('user')
+    let courses
+    if (req.query.user) {
+      courses = await Course.find({ user: req.query.user }).sort().populate('category', 'title').populate('user')
+    } else {
+      courses = await Course.find(query).sort().populate('category', 'title').populate('user')
+    }
 
     return res.send(courses)
   } catch (e) {
