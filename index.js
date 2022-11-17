@@ -9,6 +9,7 @@ const config = require('./config')
 const categories = require('./app/categories')
 const courses = require('./app/courses')
 const users = require('./app/users')
+const notifications = require('./app/notifications')
 
 const app = express()
 const port = 8000
@@ -27,6 +28,7 @@ app.use(
 app.use('/categories', categories)
 app.use('/courses', courses)
 app.use('/users', users)
+app.use('/notifications', notifications)
 
 const run = async () => {
   await mongoose.connect(config.mongo.db, config.mongo.options)
