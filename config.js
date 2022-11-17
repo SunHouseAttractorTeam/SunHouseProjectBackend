@@ -18,7 +18,6 @@ module.exports = {
   },
   google: {
     clientId: '320044799333-r151su7af1nmosequ05tmalg8n83tvtl.apps.googleusercontent.com',
-    appSecret: process.env.GOOGLE_APP_SECRET,
   },
   vk: {
     appId: '51471263',

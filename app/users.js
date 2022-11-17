@@ -2,9 +2,11 @@ const express = require('express')
 const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
+const { OAuth2Client } = require('google-auth-library')
 const User = require('../models/User')
 const config = require('../config')
 
+const client = new OAuth2Client(config.google.clientId)
 const router = express.Router()
 const utils = require('../middleweare/token')
 
@@ -147,6 +149,38 @@ router.post('/vkLogin', async (req, res) => {
     return res.send(userIs)
   } catch (e) {
     return res.status(401).send({ message: 'VK token incorrect!' })
+  }
+})
+
+router.post('/googleLogin', async (req, res) => {
+  const token = req.body.credential
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: `${token}`,
+      audience: config.google.clientId,
+    })
+
+    const { name, email, picture, sub } = ticket.payload
+
+    let user = await User.findOne({ email })
+
+    if (!user) {
+      user = new User({
+        email,
+        password: nanoid(),
+        username: name,
+        avatar: picture,
+        googleId: sub,
+      })
+    }
+
+    await user.save({ validateBeforeSave: false })
+    user.token = token
+
+    return res.send(user)
+  } catch (e) {
+    return res.status(401).send({ message: 'Google token incorrect!' })
   }
 })
 
