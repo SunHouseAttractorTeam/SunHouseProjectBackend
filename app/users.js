@@ -87,28 +87,33 @@ router.post('/facebookLogin', async (req, res) => {
             return res.status(401).send({message: 'Facebook token incorrect!'});
         }
 
-        if (req.body.id !== response.data.data.user_id) {
+        if (req.body.userID !== response.data.data.user_id) {
             return res.status(401).send({message: 'Wrong User ID'});
         }
 
-        let user = await User.findOne({facebookId: req.body.id});
-
-        const {username} = user;
-        const maxAge = 2 * 60 * 60;
-        const token = utils.getToken(username, maxAge)
+        let user = await User.findOne({facebookId: req.body.userID});
 
         if (!user) {
             user = new User({
                 email: req.body.email,
                 password: nanoid(),
-                facebookId: req.body.id,
+                facebookId: req.body.userID,
                 username: req.body.name,
                 avatar: req.body.picture.data.url,
             });
         }
 
-        await user.save({validateBeforeSave: false});
+        const {username} = user;
+        const maxAge = 2 * 60 * 60;
+        const token = utils.getToken(username, maxAge)
+
+        res.cookie("jwt", token, {
+            httpOnly: false,
+            maxAge: maxAge * 1000,
+        });
+
         user.token = token;
+        await user.save({validateBeforeSave: false});
         return res.send(user);
     } catch (e) {
         return res.status(401).send({message: 'Facebook token incorrect!'});
