@@ -10,7 +10,7 @@ router.get('/', auth, async (req, res) => {
         const notification = await Notification.find()
         res.send(notification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+       return res.status(500).send({ error: e.message })
     }
 })
 
@@ -24,7 +24,7 @@ router.get('/:id', auth, async (req, res) => {
 
         res.send(findNotifications)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+       return res.status(500).send({ error: e.message })
     }
 })
 
@@ -48,7 +48,7 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
         await notification.save()
         res.send(notification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+       return res.status(500).send({ error: e.message })
     }
 })
 
@@ -77,7 +77,7 @@ router.put('/:id',auth, permit('admin', 'teacher'), async (req, res) => {
         const updateNotification = await Notification.findByIdAndUpdate(req.params.id, notificationData, { new: true })
         res.send(updateNotification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+       return res.status(500).send({ error: e.message })
     }
 })
 
@@ -93,7 +93,7 @@ router.delete('/:id',auth,  permit('admin', 'teacher'), async (req, res) => {
 
         res.send(deleteNotification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+       return res.status(500).send({ error: e.message })
     }
 })
 
