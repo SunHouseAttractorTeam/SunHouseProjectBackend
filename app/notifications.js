@@ -8,9 +8,9 @@ const router = express.Router()
 router.get('/', auth, async (req, res) => {
     try {
         const notification = await Notification.find()
-        res.send(notification)
+        return res.send(notification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+        return res.status(500).send({ error: e.message })
     }
 })
 
@@ -22,13 +22,13 @@ router.get('/:id', auth, async (req, res) => {
             return res.status(404).send({ message: 'Notifications not found!' })
         }
 
-        res.send(findNotifications)
+        return res.send(findNotifications)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+        return res.status(500).send({ error: e.message })
     }
 })
 
-router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
+router.post('/', auth, permit('admin'), async (req, res) => {
     try {
         const {type, description } = req.body
 
@@ -46,13 +46,13 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
 
         const notification = new Notification(notificationData)
         await notification.save()
-        res.send(notification)
+        return res.send(notification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+        return res.status(500).send({ error: e.message })
     }
 })
 
-router.put('/:id',auth, permit('admin', 'teacher'), async (req, res) => {
+router.put('/:id',auth, permit('admin'), async (req, res) => {
     try {
         const {type, description } = req.body
 
@@ -75,13 +75,13 @@ router.put('/:id',auth, permit('admin', 'teacher'), async (req, res) => {
         }
 
         const updateNotification = await Notification.findByIdAndUpdate(req.params.id, notificationData, { new: true })
-        res.send(updateNotification)
+        return res.send(updateNotification)
     } catch (e) {
-        res.status(500).send({ error: e.message })
+        return  res.status(500).send({ error: e.message })
     }
 })
 
-router.delete('/:id',auth,  permit('admin', 'teacher'), async (req, res) => {
+router.delete('/:id',auth,  permit('admin', 'teacher', 'user'), async (req, res) => {
     try {
         const notification = await Notification.findById(req.params.id)
 
@@ -89,11 +89,15 @@ router.delete('/:id',auth,  permit('admin', 'teacher'), async (req, res) => {
             return res.status(404).send({ message: 'Notification not found!' })
         }
 
-        const deleteNotification = await Notification.findByIdAndDelete({ _id: req.params.id })
+        if(req.user._id.equals(notification.user)){
+            console.log('e')
+            const deleteNotification = await Notification.findByIdAndDelete({ _id: req.params.id })
+            return res.send(deleteNotification)
+        }
 
-        res.send(deleteNotification)
+        return res.status(403).send({message: 'You not have any permission'})
     } catch (e) {
-        res.status(500).send({ error: e.message })
+        return res.status(500).send({ error: e.message })
     }
 })
 
