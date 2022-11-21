@@ -13,14 +13,14 @@ module.exports = {
     },
   },
   facebook: {
-    appId: '5912743682160832',
+    appId: process.env.FACEBOOK_APP_ID,
     appSecret: process.env.FACEBOOK_APP_SECRET,
   },
   google: {
-    clientId: '320044799333-r151su7af1nmosequ05tmalg8n83tvtl.apps.googleusercontent.com',
+    clientId: process.env.GOOGLE_CLIENT_ID,
   },
   vk: {
-    appId: '51471263',
+    appId: process.env.VK_APP_ID,
     personalToken: process.env.PERSONAL_TOKEN,
     appSecret: process.env.VK_APP_SECRET,
   },
