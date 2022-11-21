@@ -10,6 +10,12 @@ const client = new OAuth2Client(config.google.clientId)
 const router = express.Router()
 const utils = require('../middleweare/token')
 
+const getLiveCookie = user => {
+  const { username } = user
+  const maxAge = 730 * 60 * 60
+  return { token: utils.getToken(username, maxAge), maxAge }
+}
+
 router.post('/', async (req, res) => {
   try {
     const { email, password, username } = req.body
@@ -18,17 +24,18 @@ router.post('/', async (req, res) => {
       return res.status(400).send({ error: 'Data not valid' })
     }
 
-    const maxAge = 72 * 60 * 60
-    const token = utils.getToken(username, maxAge)
-
-    const userData = { email, password, username, token }
+    const userData = { email, password, username }
 
     const user = new User(userData)
+
+    const { token, maxAge } = getLiveCookie(user)
 
     res.cookie('jwt', token, {
       httpOnly: false,
       maxAge: maxAge * 1000,
     })
+
+    user.token = token
 
     await user.save()
 
@@ -56,9 +63,7 @@ router.post('/sessions', async (req, res) => {
       res.status(401).send({ error: 'Credentials are wrong!' })
     }
 
-    const { username } = user
-    const maxAge = 72 * 60 * 60
-    const token = utils.getToken(username, maxAge)
+    const { token, maxAge } = getLiveCookie(user)
 
     res.cookie('jwt', token, {
       httpOnly: false,
@@ -88,30 +93,32 @@ router.post('/facebookLogin', async (req, res) => {
     }
 
     if (req.body.userID !== response.data.data.user_id) {
-      console.log(req.body.userID, response.data.data.user_id)
       return res.status(401).send({ message: 'Wrong User ID' })
     }
-
-    let user = await User.findOne({ facebookId: req.body.id })
-
-    const { username } = user
-    const maxAge = 2 * 60 * 60
-    const token = utils.getToken(username, maxAge)
+    let user = await User.findOne({ $or: [{ facebookId: req.body.userID }, { email: req.body.email }] })
 
     if (!user) {
       user = new User({
         email: req.body.email,
         password: nanoid(),
-        facebookId: req.body.id,
+        facebookId: req.body.userID,
         username: req.body.name,
         avatar: req.body.picture.data.url,
+        authentication: true,
       })
     }
+    const { token, maxAge } = getLiveCookie(user)
+    res.cookie('jwt', token, {
+      httpOnly: false,
+      maxAge: maxAge * 1000,
+    })
+
+    user.token = token
 
     await user.save({ validateBeforeSave: false })
-    user.token = token
     return res.send(user)
   } catch (e) {
+    console.log(e)
     return res.status(401).send({ message: 'Facebook token incorrect!' })
   }
 })
@@ -129,7 +136,8 @@ router.post('/vkLogin', async (req, res) => {
       return res.status(401).send({ message: 'VK token incorrect!' })
     }
 
-    let userIs = await User.findOne({ vkId: user.id })
+    let userIs = await User.findOne({ $or: [{ vkId: user.id }, { email: req.body.email }] })
+
     if (!userIs) {
       userIs = new User({
         email: `${user.id}@gmail.com`,
@@ -137,14 +145,18 @@ router.post('/vkLogin', async (req, res) => {
         vkId: user.id,
         username: `${user.first_name} ${user.last_name}`,
         avatar: ticket[0].photo_max_orig,
+        authentication: true,
       })
     }
 
-    const maxAge = 2 * 60 * 60
-    const token = utils.getToken(userIs.username, maxAge)
+    const { token, maxAge } = getLiveCookie(user)
+
+    res.cookie('jwt', token, {
+      httpOnly: false,
+      maxAge: maxAge * 1000,
+    })
 
     await userIs.save({ validateBeforeSave: false })
-    userIs.token = token
 
     return res.send(userIs)
   } catch (e) {
@@ -153,12 +165,11 @@ router.post('/vkLogin', async (req, res) => {
 })
 
 router.post('/googleLogin', async (req, res) => {
-  const token = req.body.credential
-
+  const { credential, clientId } = req.body
   try {
     const ticket = await client.verifyIdToken({
-      idToken: `${token}`,
-      audience: config.google.clientId,
+      idToken: `${credential}`,
+      audience: clientId,
     })
 
     const { name, email, picture, sub } = ticket.payload
@@ -172,12 +183,19 @@ router.post('/googleLogin', async (req, res) => {
         username: name,
         avatar: picture,
         googleId: sub,
+        authentication: true,
       })
     }
 
-    await user.save({ validateBeforeSave: false })
-    user.token = token
+    const { token, maxAge } = getLiveCookie(user)
 
+    res.cookie('jwt', token, {
+      httpOnly: false,
+      maxAge: maxAge * 1000,
+    })
+
+    user.token = token
+    await user.save({ validateBeforeSave: false })
     return res.send(user)
   } catch (e) {
     return res.status(401).send({ message: 'Google token incorrect!' })
@@ -193,9 +211,10 @@ router.delete('/sessions', async (req, res) => {
   const user = await User.findOne({ token: cookie })
 
   if (!user) return res.send(success)
-  const maxAge = 2 * 60 * 60
 
-  user.token = utils.getToken(user.username, maxAge)
+  const { token } = getLiveCookie(user)
+  user.token = token
+
   await user.save({ validateBeforeSave: false })
 
   return res.send({ success, user })
