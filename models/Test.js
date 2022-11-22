@@ -20,6 +20,7 @@ const QuestionSchema = new Schema({
     answers: [AnswerSchema]
 })
 
+
 const TestSchema = new Schema({
     title: {
         type: String,
@@ -27,6 +28,10 @@ const TestSchema = new Schema({
     },
     description: {
         type: String,
+    },
+    module: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Module'
     },
     questions: [QuestionSchema],
     file: String,
