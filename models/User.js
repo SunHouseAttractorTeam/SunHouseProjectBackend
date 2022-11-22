@@ -44,7 +44,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     default: 'user',
-    enum: ['user', 'teacher', 'admin'],
+    enum: ['user', 'teacher', 'admin', 'moderator'],
   },
   avatar: {
     type: String,
@@ -57,7 +57,24 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  courses: [],
+  courses: [
+      {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course'
+      }
+  ],
+  count: [
+    {
+      test: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Test'
+      },
+      count: {
+        type: Number,
+        default: 0
+      },
+    },
+  ],
 })
 
 UserSchema.pre('save', async function (next) {

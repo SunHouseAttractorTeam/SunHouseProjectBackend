@@ -2,13 +2,14 @@ const express = require('express')
 const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
-const { OAuth2Client } = require('google-auth-library')
+const { OAuth2Client, auth} = require('google-auth-library')
 const User = require('../models/User')
 const config = require('../config')
 
 const client = new OAuth2Client(config.google.clientId)
 const router = express.Router()
 const utils = require('../middleweare/token')
+const permit = require("../middleweare/permit");
 
 const getLiveCookie = user => {
   const { username } = user
@@ -118,7 +119,6 @@ router.post('/facebookLogin', async (req, res) => {
     await user.save({ validateBeforeSave: false })
     return res.send(user)
   } catch (e) {
-    console.log(e)
     return res.status(401).send({ message: 'Facebook token incorrect!' })
   }
 })
@@ -199,6 +199,48 @@ router.post('/googleLogin', async (req, res) => {
     return res.send(user)
   } catch (e) {
     return res.status(401).send({ message: 'Google token incorrect!' })
+  }
+})
+
+    // Временный набросок счетчика //
+router.put('/?test=testId/:id',permit('Teacher'),async (req, res) => {
+  const idUser = req.params.id
+  const idTest = req.query.test
+  try {
+  const user = await User.findById(idUser)
+  const test = await User.find({count: {$elemMatch: {test: idTest}}})
+    // Нужна проверка на число в счетчике
+  if (!user) {
+    return res.status(404).send({ message: 'User not found!' })
+  }
+  if (!test) {
+    return res.status(404).send({ message: 'Test not found!' })
+  }
+    // Нужно ли дополнительно искать тест?
+  const updateCount =  await User.findByIdAndUpdate(idUser, {$push: {count: count++}})
+    return res.send(updateCount)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+      // Временный набросок обнуления счетчика
+router.delete('/?test=testId/:id',permit('Teacher'),async (req, res) => {
+  const idUser = req.params.id
+  const idTest = req.query.test
+  try {
+    const user = await User.findById(idUser)
+    const test = await User.find({count: {$elemMatch: {test: idTest}}})
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    if (!test) {
+      return res.status(404).send({ message: 'Test not found!' })
+    }
+    // Нужно ли дополнительно искать тест?
+    const updateCount =  await User.findByIdAndUpdate(idUser, {$push: {count: 0}})
+    return res.send(updateCount)
+  } catch (e) {
+    return res.sendStatus(500)
   }
 })
 
