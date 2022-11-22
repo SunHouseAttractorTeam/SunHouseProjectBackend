@@ -126,7 +126,7 @@ router.put('/', auth, async (req, res) => {
 
 // Добавление владельцев
 
-router.put('/owners/:id', auth, permit('teacher'), async (req, res) => {
+router.put('/add_owners/:id', auth, permit('teacher'), async (req, res) => {
   const authUser = req.user._id.toString()
   const id = req.params._id
   try {
@@ -142,12 +142,62 @@ router.put('/owners/:id', auth, permit('teacher'), async (req, res) => {
       const addOwners = await Course.findByIdAndUpdate(id, { $push: { owners: authUser } })
       return res.send(addOwners)
     }
-    const owners = await Course.findById(id)
-    return res.send(owners)
+    return res.send(course)
   } catch (e) {
     return res.sendStatus(500)
   }
 })
+
+// Добавление студентов на курс
+
+router.put('/add_users/:id', auth, permit('teacher'), async (req, res) => {
+  const authUser = req.user._id.toString()
+  const id = req.params._id
+  try {
+    const user = await User.findById(authUser)
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const course = await Course.findById(id)
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found!' })
+    }
+    if (!course.users.includes(user)) {
+      const addUsers = await Course.findByIdAndUpdate(id, { $push: { users: authUser, status: true } })
+      return res.send(addUsers)
+    }
+    return res.send(course)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
+// Изменение статуса
+
+router.put('/:id/status', auth, permit('admin'), async (req, res) => {
+  const authUser = req.user._id.toString()
+  const id = req.params._id
+
+  try {
+    const user = await User.findById(authUser)
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const course = await Course.findOne(id)
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found' })
+    }
+    if (course.users.includes(authUser)) {
+      const updatedStatus = await Course.findByIdAndUpdate(id, { $push: { users: { status: false } } })
+      return res.send(updatedStatus)
+    }
+    return res.send(course)
+  } catch (e) {
+    res.sendStatus(500)
+  }
+})
+
+// Удаление курса
 
 router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   const courseId = req.params.id
