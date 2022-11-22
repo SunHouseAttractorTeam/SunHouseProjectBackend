@@ -10,19 +10,9 @@ const User = require('../models/User')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
-  const query = {}
-
-  if (req.query.category) query.category = req.query.category
-
   try {
-    let courses
-    if (req.query.user) {
-      courses = await Course.find({ user: req.query.user }).sort().populate('category', 'title').populate('user')
-    } else {
-      courses = await Course.find(query).sort().populate('category', 'title').populate('user')
-    }
-
-    return res.send(courses)
+    const course = await Course.find().sort({ dateTime: 1 }).select('title description price')
+    return res.send(course)
   } catch (e) {
     return res.sendStatus(500)
   }

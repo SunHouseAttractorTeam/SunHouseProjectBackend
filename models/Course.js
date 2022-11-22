@@ -17,7 +17,6 @@ const RatingSchema = new Schema({
 const UsersSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
     ref: 'User',
   },
   status: {
@@ -26,8 +25,10 @@ const UsersSchema = new Schema({
   },
 })
 const OwnersSchema = new Schema({
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'User',
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
 })
 const CourseSchema = new Schema({
   title: {
