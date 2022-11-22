@@ -21,7 +21,10 @@ const UsersSchema = new Schema({
         required: true,
         ref: 'User',
       },
-      status: true,
+      status:  {
+        type: Boolean,
+        default: true
+      },
 })
 
 
