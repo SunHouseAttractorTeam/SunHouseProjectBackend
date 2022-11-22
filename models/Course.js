@@ -2,11 +2,10 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-
 const RatingSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   value: {
     type: Number,
@@ -16,18 +15,20 @@ const RatingSchema = new Schema({
 })
 
 const UsersSchema = new Schema({
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User',
-      },
-      status:  {
-        type: Boolean,
-        default: true
-      },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User',
+  },
+  status: {
+    type: Boolean,
+    default: true,
+  },
 })
-
-
+const OwnersSchema = new Schema({
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User',
+})
 const CourseSchema = new Schema({
   title: {
     type: String,
@@ -40,6 +41,7 @@ const CourseSchema = new Schema({
 
   rating: [RatingSchema],
   users: [UsersSchema],
+  owners: [OwnersSchema],
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
@@ -54,7 +56,7 @@ const CourseSchema = new Schema({
     type: String,
     required: true,
   },
-  image: String
+  image: String,
 })
 
 const Course = mongoose.model('Course', CourseSchema)
