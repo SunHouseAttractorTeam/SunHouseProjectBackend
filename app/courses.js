@@ -4,6 +4,7 @@ const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
 const dayjs = require("dayjs");
+const mongoose = require("mongoose");
 
 const router = express.Router()
 
@@ -42,7 +43,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-    const { title, description, category, price} = req.body
+    const { title, description, category, price, image} = req.body
 
     if (!title || !description || !category || !price) {
       return res.status(401).send({ message: 'Data not valid!' })
@@ -54,6 +55,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       user: req.user._id,
       category,
       price,
+      image,
       dateTime: dayjs().format('DD/MM/YYYY'),
     }
 
@@ -67,7 +69,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 })
 
 router.put('/:id', auth, permit('teacher'), async (req, res) => {
-  const { title, description, category, price} = req.body
+  const { title, description, category, price, image} = req.body
 
   if (!title || !description || !category || !price) {
     return res.status(401).send({ message: 'Data not valid!' })
@@ -79,6 +81,7 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
     category,
     user: req.user._id,
     price,
+    image,
     dateTime: dayjs().format('DD/MM/YYYY'),
   }
 
@@ -98,6 +101,36 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
     return res.send(updateCourse)
   } catch (e) {
     return res.sendStatus(500)
+  }
+})
+
+  // Добавление рейтинга
+
+router.put('/', auth, async (req, res) => {
+  try {
+    const {id, rating} = req.body
+    if (!rating) {
+      return res.status(400).send('Data not valid')
+    }
+
+    const course = await Course.find({_id: id, rating: {$elemMatch: {user: req.user._id}}})
+
+    if (course.length === 0) {
+      const newRating = {rating, user: req.user._id}
+      await Course.updateOne({_id: id}, {$push: {rating: newRating}})
+    } else {
+      await Course.updateOne({_id: id, "rating.user" : req.user._id}, {$set: {"rating.$.rating" : rating}})
+    }
+
+    const updatedRating = await Course
+        .aggregate([
+          {$match: {_id: new mongoose.Types.ObjectId(id)}},
+          {$addFields: {ratingAverage: {$avg: '$rating.rating'}}},
+        ])
+
+    res.send(updatedRating[0])
+  } catch (e) {
+    res.sendStatus(500)
   }
 })
 
