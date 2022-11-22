@@ -3,6 +3,7 @@ const express = require('express')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
+const dayjs = require("dayjs");
 
 const router = express.Router()
 
@@ -41,9 +42,9 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-    const { title, description, category, price, time } = req.body
+    const { title, description, category, price} = req.body
 
-    if (!title || !description || !category || !price || !time) {
+    if (!title || !description || !category || !price) {
       return res.status(401).send({ message: 'Data not valid!' })
     }
 
@@ -53,7 +54,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       user: req.user._id,
       category,
       price,
-      time,
+      dateTime: dayjs().format('DD/MM/YYYY'),
     }
 
     const course = new Course(courseData)
@@ -66,10 +67,9 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 })
 
 router.put('/:id', auth, permit('teacher'), async (req, res) => {
-  const { title, description, category, price, time } = req.body
-  const { user } = req
+  const { title, description, category, price} = req.body
 
-  if (!title || !description || !category || !price || !time) {
+  if (!title || !description || !category || !price) {
     return res.status(401).send({ message: 'Data not valid!' })
   }
 
@@ -79,7 +79,7 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
     category,
     user: req.user._id,
     price,
-    time,
+    dateTime: dayjs().format('DD/MM/YYYY'),
   }
 
   try {
