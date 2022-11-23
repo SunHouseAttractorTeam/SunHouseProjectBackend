@@ -8,11 +8,11 @@ const LessonSchema = new Schema({
         required: true,
         unique: true
     },
-    // module: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     required: true,
-    //     ref: 'Module',
-    // },
+    module: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Module',
+    },
     description: {
         required: true,
         type: String

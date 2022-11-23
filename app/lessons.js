@@ -65,11 +65,11 @@ router.post('/', auth, permit('admin', 'teacher'),   async (req, res) => {
     }
 })
 
-router.put('/:id',auth, async (req, res) => {
+router.put('/:id',auth, permit('admin', 'teacher'),  async (req, res) => {
     try {
-        const {title, description,file, audio, video } = req.body
+        const {title, description,file, audio, video, module } = req.body
 
-        if (!title && !description) {
+        if (!title && !description && !module) {
             return res.status(400).send({
                 message: 'Data not valid',
             })
