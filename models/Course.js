@@ -14,22 +14,6 @@ const RatingSchema = new Schema({
   },
 })
 
-const UsersSchema = new Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  status: {
-    type: Boolean,
-    default: true,
-  },
-})
-const OwnersSchema = new Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-})
 const CourseSchema = new Schema({
   title: {
     type: String,
@@ -41,8 +25,8 @@ const CourseSchema = new Schema({
   },
 
   rating: [RatingSchema],
-  users: [UsersSchema],
-  owners: [OwnersSchema],
+  users: [],
+  owners: [],
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',

@@ -11,7 +11,7 @@ const router = express.Router()
 
 router.get('/', async (req, res) => {
   try {
-    const course = await Course.find().sort({ dateTime: 1 }).select('title description price')
+    const course = await Course.find().sort({ dateTime: 1 })
     return res.send(course)
   } catch (e) {
     return res.sendStatus(500)
@@ -116,23 +116,26 @@ router.put('/', auth, async (req, res) => {
 
 // Добавление владельцев
 
-router.put('/add_owners/:id', auth, permit('teacher'), async (req, res) => {
-  const authUser = req.user._id.toString()
-  const id = req.params._id
+router.put('/add_owners', auth, permit('teacher'), async (req, res) => {
+  const userId = req.query.user
+  const courseID = req.query.course
   try {
-    const user = await User.findById(authUser)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
+    if (userId || courseID) {
+      const user = await User.findById(userId)
+      if (!user) {
+        return res.status(404).send({ message: 'User not found!' })
+      }
+      await User.findByIdAndUpdate(userId, { role: 'teacher' })
+      const course = await Course.findById(courseID)
+      if (!course) {
+        return res.status(404).send({ message: 'Course not found!' })
+      }
+      if (!course.owners.includes(userId)) {
+        const addOwners = await Course.findByIdAndUpdate(courseID, { $push: { owners: userId } })
+        return res.send(addOwners)
+      }
+      return res.send(course)
     }
-    const course = await Course.findById(id)
-    if (!course) {
-      return res.status(404).send({ message: 'Course not found!' })
-    }
-    if (!course.owners.includes(user)) {
-      const addOwners = await Course.findByIdAndUpdate(id, { $push: { owners: authUser } })
-      return res.send(addOwners)
-    }
-    return res.send(course)
   } catch (e) {
     return res.sendStatus(500)
   }
@@ -140,23 +143,25 @@ router.put('/add_owners/:id', auth, permit('teacher'), async (req, res) => {
 
 // Добавление студентов на курс
 
-router.put('/add_users/:id', auth, permit('teacher'), async (req, res) => {
-  const authUser = req.user._id.toString()
-  const id = req.params._id
+router.put('/add_users', auth, permit('teacher'), async (req, res) => {
+  const userId = req.query.user
+  const courseID = req.query.course
   try {
-    const user = await User.findById(authUser)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
+    if (userId || courseID) {
+      const user = await User.findById(userId)
+      if (!user) {
+        return res.status(404).send({ message: 'User not found!' })
+      }
+      const course = await Course.findById(courseID)
+      if (!course) {
+        return res.status(404).send({ message: 'Course not found!' })
+      }
+      if (!course.users.includes(userId)) {
+        const addUsers = await Course.findByIdAndUpdate(courseID, { $push: { users: userId, status: true } })
+        return res.send(addUsers)
+      }
+      return res.send(course)
     }
-    const course = await Course.findById(id)
-    if (!course) {
-      return res.status(404).send({ message: 'Course not found!' })
-    }
-    if (!course.users.includes(user)) {
-      const addUsers = await Course.findByIdAndUpdate(id, { $push: { users: authUser, status: true } })
-      return res.send(addUsers)
-    }
-    return res.send(course)
   } catch (e) {
     return res.sendStatus(500)
   }
