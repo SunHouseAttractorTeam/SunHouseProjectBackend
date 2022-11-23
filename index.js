@@ -10,6 +10,7 @@ const categories = require('./app/categories')
 const courses = require('./app/courses')
 const users = require('./app/users')
 const notifications = require('./app/notifications')
+const tasks = require('./app/tasks')
 
 const app = express()
 const port = 8000
@@ -29,6 +30,7 @@ app.use('/categories', categories)
 app.use('/courses', courses)
 app.use('/users', users)
 app.use('/notifications', notifications)
+app.use('/tasks', tasks)
 
 const run = async () => {
   await mongoose.connect(config.mongo.db, config.mongo.options)
