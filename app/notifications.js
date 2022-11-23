@@ -90,7 +90,6 @@ router.delete('/:id',auth,  permit('admin', 'teacher', 'user'), async (req, res)
         }
 
         if(req.user._id.equals(notification.user)){
-            console.log('e')
             const deleteNotification = await Notification.findByIdAndDelete({ _id: req.params.id })
             return res.send(deleteNotification)
         }
