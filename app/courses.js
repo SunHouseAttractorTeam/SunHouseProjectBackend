@@ -154,9 +154,9 @@ router.put('/', auth, async (req, res) => {
       { $addFields: { ratingAverage: { $avg: '$rating.rating' } } },
     ])
 
-    res.send(updatedRating[0])
+   return res.send(updatedRating[0])
   } catch (e) {
-    res.sendStatus(500)
+   return res.sendStatus(500)
   }
 })
 
