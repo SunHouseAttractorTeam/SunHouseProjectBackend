@@ -35,10 +35,18 @@ router.get('/:id', auth, async (req, res) => {
 })
 
 router.post('/', permit('teacher', 'admin'), async (req, res) => {
+  const moduleId = req.query.module
+
   try {
+    const module = await Module.findOne({ _id: moduleId })
+
+    if (!module) {
+      return res.status(404).send('There are no such module!')
+    }
+
     const { title, description, questions } = req.body
 
-    if (!title || !description || !module || !questions) {
+    if (!title || !description || !questions) {
       return res.status(401).send('Data not valid')
     }
 
@@ -70,13 +78,13 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
     const test = new Test(testData)
     await test.save()
 
-    Module.data.push({
+    module.data.push({
       id: test._id,
       type: test.type,
       title: test.title,
     })
-    await Module.save()
 
+    await module.save()
     return res.send(test)
   } catch (e) {
     return res.sendStatus(500)
@@ -84,16 +92,16 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
 })
 
 router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
-  const { title, description, questions, module } = req.body
+  const moduleId = req.query.module
+  const { title, description, questions } = req.body
 
-  if (!title || !description || !module || !questions) {
+  if (!title || !description || !questions) {
     return res.status(401).send('Data not valid')
   }
 
   const testData = {
     title,
     description,
-    module,
     questions,
     file: null,
     video: null,
@@ -129,6 +137,12 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
     await updateTest.save()
 
     if (test.title !== updateTest.title) {
+      const module = await Module.findOne({ _id: moduleId })
+
+      if (!module) {
+        return res.status(404).send('There are no such module!')
+      }
+
       const itemToData = {
         id: updateTest._id,
         type: updateTest.type,
@@ -136,14 +150,14 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
       }
 
       const data = await Promise.all(
-        Module.data.map(item => {
+        module.data.map(item => {
           if (updateTest._id.toString() === item.id.toString()) return itemToData
           return item
         }),
       )
 
-      Module.data = data
-      await Module.save()
+      module.data = data
+      await module.save()
     }
 
     return res.send(updateTest)
@@ -154,6 +168,7 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
 
 router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
   try {
+    const moduleId = req.query.module
     const test = await Test.findById(req.params.id)
 
     if (!Course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
@@ -167,10 +182,16 @@ router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
     const response = await Test.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
-      const newData = Module.data.filter(item => item.id !== test._id)
+      const module = await Module.findOne({ _id: moduleId })
 
-      Module.data = newData
-      await Module.save()
+      if (!module) {
+        return res.status(404).send('There are no such module!')
+      }
+
+      const newData = module.data.filter(item => item.id !== test._id)
+
+      module.data = newData
+      await module.save()
 
       return res.send('Success')
     }
