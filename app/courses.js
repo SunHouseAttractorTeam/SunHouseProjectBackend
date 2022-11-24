@@ -10,9 +10,14 @@ const User = require('../models/User')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
+  const query = {}
+  if (req.query.category) query.category = req.query.category
   try {
-    const course = await Course.find().sort({ dateTime: 1 })
-    return res.send(course)
+    const courses = await Course.find(query).sort({ dateTime: 1 }).populate({
+      path: 'category',
+      select: 'title',
+    })
+    return res.send(courses)
   } catch (e) {
     return res.sendStatus(500)
   }
@@ -34,9 +39,9 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-    const { title, description, category, price, image } = req.body
+    const { title, description, category, price, time } = req.body
 
-    if (!title || !description || !category || !price) {
+    if (!title || !description || !category || !price || !time) {
       return res.status(401).send({ message: 'Data not valid!' })
     }
     const courseData = {
@@ -45,14 +50,53 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       user: req.user._id,
       category,
       price,
-      image,
-      dateTime: dayjs().format('DD/MM/YYYY'),
+      time,
     }
     const course = new Course(courseData)
     await course.save()
     return res.send(course)
   } catch (e) {
     return res.status(400).send(e)
+  }
+})
+
+// Добавление студетов и владельцев
+
+router.put('/add', async (req, res) => {
+  let user = null
+  const userId = req.query.user
+  const ownerId = req.query.owner
+  const courseID = req.query.course
+
+  try {
+    if (userId) {
+      user = await User.findById(userId)
+    }
+    if (ownerId) {
+      user = await User.findById(ownerId)
+    }
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const course = await Course.findById(courseID)
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found!' })
+    }
+    if (userId) {
+      if (!course.users.includes(userId)) {
+        const addUsers = await Course.findByIdAndUpdate(courseID, { $push: { users: user } })
+        return res.send(addUsers)
+      }
+    }
+    if (ownerId) {
+      if (!course.owners.includes(ownerId)) {
+        const addOwners = await Course.findByIdAndUpdate(courseID, { $push: { owners: user } })
+        return res.send(addOwners)
+      }
+    }
+    return res.send(course)
+  } catch (e) {
+    return res.sendStatus(500)
   }
 })
 
@@ -70,8 +114,10 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
     image,
     dateTime: dayjs().format('DD/MM/YYYY'),
   }
+
   try {
     const course = await Course.findById(req.params.id)
+
     if (!course) {
       return res.status(404).send({ message: 'Course not found!' })
     }
@@ -113,86 +159,6 @@ router.put('/', auth, async (req, res) => {
     res.sendStatus(500)
   }
 })
-
-// Добавление владельцев
-
-router.put('/add_owners', auth, permit('teacher'), async (req, res) => {
-  const userId = req.query.user
-  const courseID = req.query.course
-  try {
-    if (userId || courseID) {
-      const user = await User.findById(userId)
-      if (!user) {
-        return res.status(404).send({ message: 'User not found!' })
-      }
-      await User.findByIdAndUpdate(userId, { role: 'teacher' })
-      const course = await Course.findById(courseID)
-      if (!course) {
-        return res.status(404).send({ message: 'Course not found!' })
-      }
-      if (!course.owners.includes(userId)) {
-        const addOwners = await Course.findByIdAndUpdate(courseID, { $push: { owners: userId } })
-        return res.send(addOwners)
-      }
-      return res.send(course)
-    }
-  } catch (e) {
-    return res.sendStatus(500)
-  }
-})
-
-// Добавление студентов на курс
-
-router.put('/add_users', auth, permit('teacher'), async (req, res) => {
-  const userId = req.query.user
-  const courseID = req.query.course
-  try {
-    if (userId || courseID) {
-      const user = await User.findById(userId)
-      if (!user) {
-        return res.status(404).send({ message: 'User not found!' })
-      }
-      const course = await Course.findById(courseID)
-      if (!course) {
-        return res.status(404).send({ message: 'Course not found!' })
-      }
-      if (!course.users.includes(userId)) {
-        const addUsers = await Course.findByIdAndUpdate(courseID, { $push: { users: userId, status: true } })
-        return res.send(addUsers)
-      }
-      return res.send(course)
-    }
-  } catch (e) {
-    return res.sendStatus(500)
-  }
-})
-
-// Изменение статуса
-
-router.put('/:id/status', auth, permit('admin'), async (req, res) => {
-  const authUser = req.user._id.toString()
-  const id = req.params._id
-
-  try {
-    const user = await User.findById(authUser)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
-    }
-    const course = await Course.findOne(id)
-    if (!course) {
-      return res.status(404).send({ message: 'Course not found' })
-    }
-    if (course.users.includes(authUser)) {
-      const updatedStatus = await Course.findByIdAndUpdate(id, { $push: { users: { status: false } } })
-      return res.send(updatedStatus)
-    }
-    return res.send(course)
-  } catch (e) {
-    res.sendStatus(500)
-  }
-})
-
-// Удаление курса
 
 router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   const courseId = req.params.id
