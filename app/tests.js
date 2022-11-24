@@ -1,154 +1,184 @@
 const express = require('express')
 
-const Test = require('../models/Test ')
+const Test = require('../models/Test')
 const Module = require('../models/Module')
+const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
 
 const router = express.Router()
 
 router.get('/', auth, async (req, res) => {
-    const query = {}
+  const query = {}
 
-    if(req.query.module) query.module = req.query.module
+  if (req.query.module) query.module = req.query.module
 
-    try {
-        const tests = await Test.find(query)
+  try {
+    const tests = await Test.find(query)
 
-        return res.send(tests)
-    } catch (e) {
-        return res.sendStatus(500);
-    }
+    return res.send(tests)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
 })
 
-router.get('/:id', auth, async( req, res) => {
-    try {
-        const test = await Test.findById(req.params.id)
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const test = await Test.findById(req.params.id)
 
-        if(!test) return res.status(404).send('Test no found')
+    if (!test) return res.status(404).send('Test no found')
 
-        return res.send(test)
-    } catch (e) {
-        return res.sendStatus(500);
-    }
+    return res.send(test)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
 })
 
-router.post('/', permit('teacher'), async (req, res) => {
-    try {
-        const { title, description, module, questions} = req.body
-
-        if (!title || !description || !module || !questions) {
-            return res.status(401).send('Data not valid')
-        }
-
-        const testData = {
-            title,
-            description,
-            module,
-            questions,
-            file: null,
-            video: null,
-            audio: null,
-        }
-
-        if(req.file) {
-            switch (req.file.type) {
-                case 'file':
-                    return testData.file = req.file.file
-                case 'video':
-                   return  testData.video = req.file.file
-                case 'audio':
-                   return  testData.audio = req.file.file
-                default:
-                    return  testData
-            }
-        }
-
-        const test = new Test(testData)
-        await test.save()
-
-        await Module.data.push(test);
-        await Module.save()
-
-        return res.send(test)
-
-    } catch (e) {
-        return res.sendStatus(500)
-    }
-})
-
-router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
-    const {title, description, questions, module } = req.body
+router.post('/', permit('teacher', 'admin'), async (req, res) => {
+  try {
+    const { title, description, questions } = req.body
 
     if (!title || !description || !module || !questions) {
-        return res.status(401).send('Data not valid')
+      return res.status(401).send('Data not valid')
     }
 
     const testData = {
-        title,
-        description,
-        module,
-        questions,
-        file: null,
-        video: null,
-        audio: null,
+      title,
+      description,
+      questions,
+      file: null,
+      video: null,
+      audio: null,
     }
 
-    if(req.file) {
-        switch (req.file.type) {
-            case 'file':
-                return testData.file = req.file.file
-            case 'video':
-                return  testData.video = req.file.file
-            case 'audio':
-                return  testData.audio = req.file.file
-            default:
-                return  testData
-        }
+    if (req.file) {
+      switch (req.file.type) {
+        case 'file':
+          testData.file = req.file.file
+          break
+        case 'video':
+          testData.video = req.file.file
+          break
+        case 'audio':
+          testData.audio = req.file.file
+          break
+        default:
+          return testData
+      }
     }
 
-    try {
-        const test = await Test.findById(req.params.id)
+    const test = new Test(testData)
+    await test.save()
 
-        if(!test) return res.status(404).send('Test not found')
-            //привязать и проверить что тест принадлежит нужному пользователю
+    Module.data.push({
+      id: test._id,
+      type: test.type,
+      title: test.title,
+    })
+    await Module.save()
 
-        const updateTest = await Test.findByIdAndUpdate(req.params.id, testData)
-
-        //найти в массиве обьект и заменить его.
-         Module.data.map( item => {
-             if(updateTest._id === item._id) return updateTest
-             else if(item) return item
-        })
-        Module.save()
-
-        return res.send(updateTest)
-    } catch (e) {
-        return res.sendStatus(500);
-    }
+    return res.send(test)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
 })
 
-router.delete('/:id', auth, permit('teacher', 'admin'), async( req, res) => {
-    try {
+router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
+  const { title, description, questions, module } = req.body
 
-        const test = await Test.findById(req.params.id)
+  if (!title || !description || !module || !questions) {
+    return res.status(401).send('Data not valid')
+  }
 
-        //нужно привязать тест к юзеру, чтобы можно было удалять только свои тесты
+  const testData = {
+    title,
+    description,
+    module,
+    questions,
+    file: null,
+    video: null,
+    audio: null,
+  }
 
-        if(!test) {
-            return res.status(404).send('Test not found')
-        }
-
-        const response = await Test.deleteOne({ _id: req.params.id })
-
-        if (response.deletedCount) {
-            return res.send('Success')
-        }
-
-        return res.status(403).send({ error: 'Deleted failed' })
-    } catch(e) {
-        return res.sendStatus(500);
+  if (req.file) {
+    switch (req.file.type) {
+      case 'file':
+        testData.file = req.file.file
+        break
+      case 'video':
+        testData.video = req.file.file
+        break
+      case 'audio':
+        testData.audio = req.file.file
+        break
+      default:
+        return testData
     }
+  }
+
+  try {
+    const test = await Test.findById(req.params.id)
+
+    if (!test) return res.status(404).send('Test not found')
+
+    if (!Course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+      return res.status(404).send('Authorization error!')
+    }
+
+    const updateTest = await Test.findByIdAndUpdate(req.params.id, testData)
+    await updateTest.save()
+
+    if (test.title !== updateTest.title) {
+      const itemToData = {
+        id: updateTest._id,
+        type: updateTest.type,
+        title: updateTest.title,
+      }
+
+      const data = await Promise.all(
+        Module.data.map(item => {
+          if (updateTest._id.toString() === item.id.toString()) return itemToData
+          return item
+        }),
+      )
+
+      Module.data = data
+      await Module.save()
+    }
+
+    return res.send(updateTest)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
+router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
+  try {
+    const test = await Test.findById(req.params.id)
+
+    if (!Course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+      return res.status(404).send('Authorization error!')
+    }
+
+    if (!test) {
+      return res.status(404).send('Test not found')
+    }
+
+    const response = await Test.deleteOne({ _id: req.params.id })
+
+    if (response.deletedCount) {
+      const newData = Module.data.filter(item => item.id !== test._id)
+
+      Module.data = newData
+      await Module.save()
+
+      return res.send('Success')
+    }
+
+    return res.status(403).send({ error: 'Deleted failed' })
+  } catch (e) {
+    return res.sendStatus(500)
+  }
 })
 
 module.exports = router
