@@ -188,9 +188,7 @@ router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
         return res.status(404).send('There are no such module!')
       }
 
-      const newData = module.data.filter(item => item.id !== test._id)
-
-      module.data = newData
+      module.data = module.data.filter(item => item.id !== test._id)
       await module.save()
 
       return res.send('Success')
