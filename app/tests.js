@@ -26,7 +26,7 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const test = await Test.findById(req.params.id)
 
-    if (!test) return res.status(404).send('Test no found')
+    if (!test) return res.status(404).send({ message: 'Test no found' })
 
     return res.send(test)
   } catch (e) {
@@ -41,13 +41,13 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
     const module = await Module.findOne({ _id: moduleId })
 
     if (!module) {
-      return res.status(404).send('There are no such module!')
+      return res.status(404).send({ message: 'There are no such module!' })
     }
 
     const { title, description, questions } = req.body
 
     if (!title || !description || !questions) {
-      return res.status(401).send('Data not valid')
+      return res.status(401).send({ message: 'Data not valid' })
     }
 
     const testData = {
@@ -96,7 +96,7 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
   const { title, description, questions } = req.body
 
   if (!title || !description || !questions) {
-    return res.status(401).send('Data not valid')
+    return res.status(401).send({ message: 'Data not valid' })
   }
 
   const testData = {
@@ -127,10 +127,10 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
   try {
     const test = await Test.findById(req.params.id)
 
-    if (!test) return res.status(404).send('Test not found')
+    if (!test) return res.status(404).send({ message: 'Test not found' })
 
     if (!Course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
-      return res.status(404).send('Authorization error!')
+      return res.status(404).send({ message: 'Authorization error!' })
     }
 
     const updateTest = await Test.findByIdAndUpdate(req.params.id, testData)
@@ -140,7 +140,7 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
       const module = await Module.findOne({ _id: moduleId })
 
       if (!module) {
-        return res.status(404).send('There are no such module!')
+        return res.status(404).send({ message: 'There are no such module!' })
       }
 
       const itemToData = {
@@ -172,14 +172,14 @@ router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
     const test = await Test.findById(req.params.id)
     const course = await Course.findById(courseId)
 
-    if (!course) return res.status(404).send('Course not found!')
+    if (!course) return res.status(404).send({ message: 'Course not found!' })
 
     if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
-      return res.status(404).send('Authorization error!')
+      return res.status(404).send({ message: 'Authorization error!' })
     }
 
     if (!test) {
-      return res.status(404).send('Test not found')
+      return res.status(404).send({ message: 'Test not found' })
     }
 
     const response = await Test.deleteOne({ _id: req.params.id })
@@ -188,7 +188,7 @@ router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
       const module = await Module.findOne({ _id: moduleId })
 
       if (!module) {
-        return res.status(404).send('There are no such module!')
+        return res.status(404).send({ message: 'There are no such module!' })
       }
 
       module.data = module.data.filter(item => item.id !== test._id)
