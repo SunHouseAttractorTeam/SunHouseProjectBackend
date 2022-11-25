@@ -149,14 +149,13 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
         title: updateTest.title,
       }
 
-      const data = await Promise.all(
+      module.data = await Promise.all(
         module.data.map(item => {
           if (updateTest._id.toString() === item.id.toString()) return itemToData
           return item
         }),
       )
 
-      module.data = data
       await module.save()
     }
 
@@ -169,9 +168,13 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
 router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
   try {
     const moduleId = req.query.module
+    const courseId = req.query.course
     const test = await Test.findById(req.params.id)
+    const course = await Course.findById(courseId)
 
-    if (!Course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+    if (!course) return res.status(404).send('Course not found!')
+
+    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
       return res.status(404).send('Authorization error!')
     }
 
