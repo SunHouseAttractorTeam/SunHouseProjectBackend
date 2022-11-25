@@ -42,10 +42,10 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
     const module = await Module.findById(moduleId)
 
     if (!module) {
-      return res.status(404).send('There are no such module!')
+      return res.status(404).send({ message: 'There are no such module!' })
     }
 
-    if (!title && !description) {
+    if (!title || !description) {
       return res.status(400).send({
         message: 'Data not valid',
       })
@@ -93,7 +93,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   try {
     const { title, description } = req.body
 
-    if (!title && !description) {
+    if (!title || !description) {
       return res.status(400).send({
         message: 'Data not valid',
       })
@@ -132,7 +132,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
       const module = await Module.findOne({ _id: moduleId })
 
       if (!module) {
-        return res.status(404).send('There are no such module!')
+        return res.status(404).send({ message: 'There are no such module!' })
       }
 
       const itemToData = {
@@ -167,10 +167,10 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
       return res.status(404).send({ message: 'Lesson not found!' })
     }
 
-    if (!course) return res.status(404).send('Course not found!')
+    if (!course) return res.status(404).send({ message: 'Course not found!' })
 
     if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
-      return res.status(401).send('Authoeization error')
+      return res.status(401).send({ message: 'Authorization error' })
     }
 
     const response = await Lesson.deleteOne({ _id: req.params.id })
@@ -179,7 +179,7 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
       const module = await Module.findOne({ _id: moduleId })
 
       if (!module) {
-        return res.status(404).send('There are no such module!')
+        return res.status(404).send({ message: 'There are no such module!' })
       }
 
       module.data = module.data.filter(item => item.id !== lesson._id)
