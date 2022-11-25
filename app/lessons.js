@@ -2,6 +2,7 @@ const express = require('express')
 const auth = require('../middleweare/auth')
 const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
+const Course = require('../models/Course')
 const permit = require('../middleweare/permit')
 
 const router = express.Router()
@@ -127,8 +128,27 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
 
     const updateLesson = await Lesson.findByIdAndUpdate(req.params.id, lessonData, { new: true })
 
-    // TODO: need to wait SUN-70 task for use model Module
-    // Need to update lesson model in the Module.data array
+    if (lesson.title !== updateLesson.title) {
+      const module = await Module.findOne({ _id: moduleId })
+
+      if (!module) {
+        return res.status(404).send('There are no such module!')
+      }
+
+      const itemToData = {
+        id: updateLesson._id,
+        type: updateLesson.type,
+        title: updateLesson.title,
+      }
+
+      module.data = await Promise.all(
+        module.data.map(item => {
+          if (updateLesson._id.toString() === item.id.toString()) return itemToData
+          return item
+        }),
+      )
+      await module.save()
+    }
 
     return res.send(updateLesson)
   } catch (e) {
@@ -138,18 +158,37 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
 
 router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   try {
+    const moduleId = req.query.module
+    const courseId = req.query.course
     const lesson = await Lesson.findById(req.params.id)
+    const course = await Course.findOne({ _id: courseId })
 
     if (!lesson) {
       return res.status(404).send({ message: 'Lesson not found!' })
     }
 
-    const deleteLesson = await Lesson.findByIdAndDelete({ _id: req.params.id })
+    if (!course) return res.status(404).send('Course not found!')
 
-    // TODO: need to wait SUN-70 task for use model Module
-    // Need to delete lesson model from Module.data array
+    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+      return res.status(401).send('Authoeization error')
+    }
 
-    return res.send(deleteLesson)
+    const response = await Lesson.deleteOne({ _id: req.params.id })
+
+    if (response.deletedCount) {
+      const module = await Module.findOne({ _id: moduleId })
+
+      if (!module) {
+        return res.status(404).send('There are no such module!')
+      }
+
+      module.data = module.data.filter(item => item.id !== lesson._id)
+      await module.save()
+
+      return res.send('Success')
+    }
+
+    return res.status(403).send({ error: 'Deleted failed' })
   } catch (e) {
     return res.status(500).send({ error: e.message })
   }
