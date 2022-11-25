@@ -39,9 +39,9 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-    const { title, description, category, price, time } = req.body
+    const { title, description, category, price} = req.body
 
-    if (!title || !description || !category || !price || !time) {
+    if (!title || !description || !category || !price) {
       return res.status(401).send({ message: 'Data not valid!' })
     }
     const courseData = {
@@ -50,7 +50,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       user: req.user._id,
       category,
       price,
-      time,
+      dateTime: dayjs().format('DD/MM/YYYY'),
     }
     const course = new Course(courseData)
     await course.save()
