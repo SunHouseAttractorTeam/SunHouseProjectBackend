@@ -62,7 +62,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add', async (req, res) => {
+router.put('/add',auth, permit('teacher'), async (req, res) => {
   let user = null
   const userId = req.query.user
   const ownerId = req.query.owner
