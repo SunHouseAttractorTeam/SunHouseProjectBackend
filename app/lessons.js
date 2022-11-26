@@ -90,8 +90,17 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
 
 router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   const moduleId = req.query.module
+  const courseId = req.query.course
+
   try {
     const { title, description } = req.body
+    const course = await Course.findById(courseId)
+
+    if (!course) return res.status(404).send({ message: 'There are no such course' })
+
+    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+      return res.status(401).send({ message: 'Authorization error' })
+    }
 
     if (!title || !description) {
       return res.status(400).send({
