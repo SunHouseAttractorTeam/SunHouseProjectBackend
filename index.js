@@ -10,8 +10,11 @@ const categories = require('./app/categories')
 const courses = require('./app/courses')
 const users = require('./app/users')
 const notifications = require('./app/notifications')
+
+const lessons = require('./app/lessons')
 const tests = require('./app/tests')
 const modules = require('./app/module')
+
 
 const app = express()
 const port = 8000
@@ -31,6 +34,8 @@ app.use('/categories', categories)
 app.use('/courses', courses)
 app.use('/users', users)
 app.use('/notifications', notifications)
+app.use('/lessons', lessons)
+
 
 app.use('/tests', tests)
 app.use('/modules', modules)
