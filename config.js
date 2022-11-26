@@ -25,3 +25,4 @@ module.exports = {
     appSecret: process.env.VK_APP_SECRET,
   },
 }
+
