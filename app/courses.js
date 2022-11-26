@@ -53,6 +53,9 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       dateTime: dayjs().format('DD/MM/YYYY'),
     }
     const course = new Course(courseData)
+    if (!course.owners.includes(req.user._id)) {
+      course.owners.push(req.user._id)
+    }
     await course.save()
 
     return res.send(course)
@@ -121,9 +124,6 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
 
     if (!course) {
       return res.status(404).send({ message: 'Course not found!' })
-    }
-    if (course.user._id !== req.user._id) {
-      return res.status(401).send({ message: 'Wrong token!' })
     }
     const updateCourse = await Course.findOneAndUpdate(req.params.id, courseData)
     return res.send(updateCourse)
