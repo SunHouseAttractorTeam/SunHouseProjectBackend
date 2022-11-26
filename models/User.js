@@ -18,6 +18,31 @@ const validateEmail = value => {
   if (!pattern.test(value)) return false
 }
 
+const MyCourses = new Schema({
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+  },
+  status: {
+    // True - проходит курс, False - закончил
+    type: Boolean,
+    default: true,
+    required: true,
+  },
+})
+
+const Tests = new Schema({
+  test: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Test',
+  },
+  count: {
+    type: Number,
+    default: 0,
+    required: true,
+  },
+})
+
 const UserSchema = new Schema({
   username: {
     type: String,
@@ -44,7 +69,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     default: 'user',
-    enum: ['user', 'teacher', 'admin'],
+    enum: ['user', 'teacher', 'admin', 'moderator'],
   },
   avatar: {
     type: String,
@@ -57,7 +82,8 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  courses: [],
+  myCourses: [MyCourses],
+  tests: [Tests],
 })
 
 UserSchema.pre('save', async function (next) {

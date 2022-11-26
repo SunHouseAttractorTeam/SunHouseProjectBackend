@@ -39,9 +39,9 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-    const { title, description, category, price, time } = req.body
+    const { title, description, category, price } = req.body
 
-    if (!title || !description || !category || !price || !time) {
+    if (!title || !description || !category || !price) {
       return res.status(401).send({ message: 'Data not valid!' })
     }
     const courseData = {
@@ -50,10 +50,11 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       user: req.user._id,
       category,
       price,
-      time,
+      dateTime: dayjs().format('DD/MM/YYYY'),
     }
     const course = new Course(courseData)
     await course.save()
+
     return res.send(course)
   } catch (e) {
     return res.status(400).send(e)
@@ -62,7 +63,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add',auth, permit('teacher'), async (req, res) => {
+router.put('/add', auth, permit('teacher'), async (req, res) => {
   let user = null
   const userId = req.query.user
   const ownerId = req.query.owner
@@ -154,9 +155,9 @@ router.put('/', auth, async (req, res) => {
       { $addFields: { ratingAverage: { $avg: '$rating.rating' } } },
     ])
 
-   return res.send(updatedRating[0])
+    return res.send(updatedRating[0])
   } catch (e) {
-   return res.sendStatus(500)
+    return res.sendStatus(500)
   }
 })
 
