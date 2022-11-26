@@ -92,46 +92,51 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
 })
 
 router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
-  const moduleId = req.query.module
-  const { title, description, questions } = req.body
-
-  if (!title || !description || !questions) {
-    return res.status(401).send({ message: 'Data not valid' })
-  }
-
-  const testData = {
-    title,
-    description,
-    questions,
-    file: null,
-    video: null,
-    audio: null,
-  }
-
-  if (req.file) {
-    switch (req.file.type) {
-      case 'file':
-        testData.file = req.file.file
-        break
-      case 'video':
-        testData.video = req.file.file
-        break
-      case 'audio':
-        testData.audio = req.file.file
-        break
-      default:
-        return testData
-    }
-  }
-
   try {
+    const moduleId = req.query.module
+    const courseId = req.query.courses
+
+    const course = await Course.findById(courseId)
+    const { title, description, questions } = req.body
+
+    if (!course) return res.status(404).send({ message: 'There are no such course' })
+
+    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+      return res.status(404).send({ message: 'Authorization error!' })
+    }
+
+    if (!title || !description || !questions) {
+      return res.status(401).send({ message: 'Data not valid' })
+    }
+
+    const testData = {
+      title,
+      description,
+      questions,
+      file: null,
+      video: null,
+      audio: null,
+    }
+
+    if (req.file) {
+      switch (req.file.type) {
+        case 'file':
+          testData.file = req.file.file
+          break
+        case 'video':
+          testData.video = req.file.file
+          break
+        case 'audio':
+          testData.audio = req.file.file
+          break
+        default:
+          return testData
+      }
+    }
+
     const test = await Test.findById(req.params.id)
 
     if (!test) return res.status(404).send({ message: 'Test not found' })
-
-    if (!Course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
-      return res.status(404).send({ message: 'Authorization error!' })
-    }
 
     const updateTest = await Test.findByIdAndUpdate(req.params.id, testData)
     await updateTest.save()
