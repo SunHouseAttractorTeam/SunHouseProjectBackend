@@ -3,8 +3,8 @@ const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
-const nodemailer = require('nodemailer')
 const User = require('../models/User')
+const mailer = require('./nodemailer')
 const config = require('../config')
 
 const client = new OAuth2Client(config.google.clientId)
@@ -18,28 +18,6 @@ const getLiveCookie = user => {
 }
 
 router.post('/', async (req, res) => {
-  const transporter = nodemailer.createTransport(
-      {
-        host: 'smtp.mail.ru',
-        port: 465,
-        secure: true,
-        auth: {
-          user: 'ilimalybekov@mail.ru',
-          pass: 'inNDgcUiwrBfGFGeXwir'
-        }
-      },
-      {
-        from: 'Mailer Test <ilimalybekov@mail.ru>',
-      }
-  )
-
-  const mailer = message => {
-    transporter.sendMail(message, (err, info) => {
-      if(err) return console.log(err)
-      console.log('Email sent: ', info)
-    })
-  }
-
   try {
     const { email, password, username } = req.body
 
@@ -49,15 +27,13 @@ router.post('/', async (req, res) => {
 
     const message = {
       to: req.body.email,
-      subject: 'Поздравялем вы зарегистрировались на нешем сайте',
+      subject: 'Поздравляем вы зарегистрировались на нашем сайте',
       html: `
-        <h2>Поздравляем, вы успешно прошли регистрацию на нешм сайте</h2>
-        <i>данные вашей учетной записи:</i>
-        <ul>
-            <li>login: ${req.body.email}</li>
-            <li>password: ${req.body.pass}</li>
-        </ul>
-        <p>Данное письмо не требует ответа</p>`
+        <h2>Необходимо подтверждение</h2>
+        <p>Подтвердите вашу
+            <a href="http://localhost:3000/">почту</a>
+        </p>
+        <p>Данное письмо не требует ответа</p>`,
     }
     mailer(message)
 
