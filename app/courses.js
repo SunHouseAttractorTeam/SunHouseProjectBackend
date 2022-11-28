@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id)
+    const course = await Course.findById(req.params.id).populate('module')
 
     if (!course) {
       res.status(404).send({ message: 'Course not found!' })
@@ -39,7 +39,8 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-    const { title, description, category, price} = req.body
+
+    const { title, description, category, price } = req.body
 
     if (!title || !description || !category || !price) {
       return res.status(401).send({ message: 'Data not valid!' })
@@ -53,7 +54,10 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       dateTime: dayjs().format('DD/MM/YYYY'),
     }
     const course = new Course(courseData)
+      course.owners.push(req.user._id)
+   
     await course.save()
+
     return res.send(course)
   } catch (e) {
     return res.status(400).send(e)
@@ -62,7 +66,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add',auth, permit('teacher'), async (req, res) => {
+router.put('/add', auth, permit('teacher'), async (req, res) => {
   let user = null
   const userId = req.query.user
   const ownerId = req.query.owner
@@ -121,9 +125,6 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
     if (!course) {
       return res.status(404).send({ message: 'Course not found!' })
     }
-    if (course.user._id !== req.user._id) {
-      return res.status(401).send({ message: 'Wrong token!' })
-    }
     const updateCourse = await Course.findOneAndUpdate(req.params.id, courseData)
     return res.send(updateCourse)
   } catch (e) {
@@ -154,9 +155,9 @@ router.put('/', auth, async (req, res) => {
       { $addFields: { ratingAverage: { $avg: '$rating.rating' } } },
     ])
 
-   return res.send(updatedRating[0])
+    return res.send(updatedRating[0])
   } catch (e) {
-   return res.sendStatus(500)
+    return res.sendStatus(500)
   }
 })
 
