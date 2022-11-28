@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const { Schema } = mongoose
 
 const bcrypt = require('bcrypt')
+const fs = require('fs')
 
 const SALT_WORK_FACTOR = 10
 
@@ -23,12 +24,6 @@ const MyCourses = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
   },
-  status: {
-    // True - проходит курс, False - закончил
-    type: Boolean,
-    default: true,
-    required: true,
-  },
 })
 
 const Tests = new Schema({
@@ -40,6 +35,32 @@ const Tests = new Schema({
     type: Number,
     default: 0,
     required: true,
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const Lessons = new Schema({
+  lesson: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const Tasks = new Schema({
+  task: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+  },
+  status: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -84,6 +105,8 @@ const UserSchema = new Schema({
   },
   myCourses: [MyCourses],
   tests: [Tests],
+  lessons: [Lessons],
+  tasks: [Tasks],
 })
 
 UserSchema.pre('save', async function (next) {

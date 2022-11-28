@@ -257,7 +257,7 @@ router.put('/add_course', auth, async (req, res) => {
 
 router.post('/:id/update_status', async (req, res) => {
   const courseId = req.params.id
-  const userId = req.query.id
+  const userId = req.query.userid
   try {
     const course = await Course.findById(courseId)
     if (!course) {
@@ -268,10 +268,18 @@ router.post('/:id/update_status', async (req, res) => {
     if (!user) {
       return res.status(404).send({ message: 'User not found!' })
     }
-    const updateCourseStatus = user.myCourses.find(elem => elem.course.toString() === courseId)
-    course.status = false
+
+    const updateCourseStatus = await User.update(
+      {
+        _id: userId,
+        'myCourse.course': courseId,
+      },
+      { $set: { 'myCourses.$.status': false } },
+    )
+
     return res.send(user)
   } catch (e) {
+    console.log(e)
     return res.status(500)
   }
 })
