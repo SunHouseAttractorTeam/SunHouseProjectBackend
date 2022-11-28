@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id)
+    const course = await Course.findById(req.params.id).populate('module')
 
     if (!course) {
       res.status(404).send({ message: 'Course not found!' })
@@ -54,9 +54,8 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       dateTime: dayjs().format('DD/MM/YYYY'),
     }
     const course = new Course(courseData)
-    if (!course.owners.includes(req.user._id)) {
       course.owners.push(req.user._id)
-    }
+   
     await course.save()
 
     return res.send(course)
