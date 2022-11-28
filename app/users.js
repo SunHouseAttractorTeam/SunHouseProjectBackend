@@ -3,6 +3,7 @@ const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
+const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const config = require('../config')
 
@@ -29,12 +30,48 @@ router.get('/', async (req, res) => {
 })
 
 router.post('/', async (req, res) => {
+  const transporter = nodemailer.createTransport(
+      {
+        host: 'smtp.mail.ru',
+        port: 465,
+        secure: true,
+        auth: {
+          user: 'ilimalybekov@mail.ru',
+          pass: 'inNDgcUiwrBfGFGeXwir'
+        }
+      },
+      {
+        from: 'Mailer Test <ilimalybekov@mail.ru>',
+      }
+  )
+
+  const mailer = message => {
+    transporter.sendMail(message, (err, info) => {
+      if(err) return console.log(err)
+      console.log('Email sent: ', info)
+    })
+  }
+
   try {
     const { email, password, username } = req.body
 
     if (!email || !password || !username) {
       return res.status(400).send({ error: 'Data not valid' })
     }
+
+    const message = {
+      to: req.body.email,
+      subject: 'Поздравялем вы зарегистрировались на нешем сайте',
+      html: `
+        <h2>Поздравляем, вы успешно прошли регистрацию на нешм сайте</h2>
+        <i>данные вашей учетной записи:</i>
+        <ul>
+            <li>login: ${req.body.email}</li>
+            <li>password: ${req.body.pass}</li>
+        </ul>
+        <p>Данное письмо не требует ответа</p>`
+    }
+    mailer(message)
 
     const userData = { email, password, username }
 
