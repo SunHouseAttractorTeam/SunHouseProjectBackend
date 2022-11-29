@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const config = require('../config')
 
-const client = new OAuth2Client(config.google.clientId)
+const client = new OAuth2Client()
 const router = express.Router()
 const utils = require('../middleweare/token')
 const permit = require('../middleweare/permit')
@@ -31,23 +31,23 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const transporter = nodemailer.createTransport(
-      {
-        host: 'smtp.mail.ru',
-        port: 465,
-        secure: true,
-        auth: {
-          user: 'ilimalybekov@mail.ru',
-          pass: 'inNDgcUiwrBfGFGeXwir'
-        }
+    {
+      host: 'smtp.mail.ru',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'ilimalybekov@mail.ru',
+        pass: 'inNDgcUiwrBfGFGeXwir',
       },
-      {
-        from: 'Mailer Test <ilimalybekov@mail.ru>',
-      }
+    },
+    {
+      from: 'Mailer Test <ilimalybekov@mail.ru>',
+    },
   )
 
   const mailer = message => {
     transporter.sendMail(message, (err, info) => {
-      if(err) return console.log(err)
+      if (err) return console.log(err)
       console.log('Email sent: ', info)
     })
   }
@@ -69,7 +69,7 @@ router.post('/', async (req, res) => {
             <li>login: ${req.body.email}</li>
             <li>password: ${req.body.pass}</li>
         </ul>
-        <p>Данное письмо не требует ответа</p>`
+        <p>Данное письмо не требует ответа</p>`,
     }
     mailer(message)
 
@@ -173,7 +173,7 @@ router.post('/facebookLogin', async (req, res) => {
 
 router.post('/vkLogin', async (req, res) => {
   const api = new VKAPI({
-    accessToken: config.vk.personalToken,
+    accessToken: req.body.session.sid,
   })
 
   try {
@@ -204,6 +204,7 @@ router.post('/vkLogin', async (req, res) => {
       maxAge: maxAge * 1000,
     })
 
+    userIs.token = token
     await userIs.save({ validateBeforeSave: false })
 
     return res.send(userIs)
