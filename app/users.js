@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const config = require('../config')
 
-const client = new OAuth2Client(config.google.clientId)
+const client = new OAuth2Client()
 const router = express.Router()
 const utils = require('../middleweare/token')
 
