@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const { Schema } = mongoose
 
 const bcrypt = require('bcrypt')
+const fs = require('fs')
 
 const SALT_WORK_FACTOR = 10
 
@@ -17,6 +18,51 @@ const validateEmail = value => {
 
   if (!pattern.test(value)) return false
 }
+
+const MyCourses = new Schema({
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+  },
+})
+
+const Tests = new Schema({
+  test: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Test',
+  },
+  count: {
+    type: Number,
+    default: 0,
+    required: true,
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const Lessons = new Schema({
+  lesson: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const Tasks = new Schema({
+  task: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+})
 
 const UserSchema = new Schema({
   username: {
@@ -44,7 +90,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     default: 'user',
-    enum: ['user', 'teacher', 'admin'],
+    enum: ['user', 'teacher', 'admin', 'moderator'],
   },
   avatar: {
     type: String,
@@ -57,7 +103,10 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  courses: [],
+  myCourses: [MyCourses],
+  tests: [Tests],
+  lessons: [Lessons],
+  tasks: [Tasks],
 })
 
 UserSchema.pre('save', async function (next) {

@@ -3,12 +3,16 @@ const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
+const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const config = require('../config')
 
 const client = new OAuth2Client(config.google.clientId)
 const router = express.Router()
 const utils = require('../middleweare/token')
+const permit = require('../middleweare/permit')
+const auth = require('../middleweare/auth')
+const Course = require('../models/Course')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -16,13 +20,58 @@ const getLiveCookie = user => {
   return { token: utils.getToken(username, maxAge), maxAge }
 }
 
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find()
+    return res.send(users)
+  } catch (e) {
+    return res.status(500)
+  }
+})
+
 router.post('/', async (req, res) => {
+  const transporter = nodemailer.createTransport(
+      {
+        host: 'smtp.mail.ru',
+        port: 465,
+        secure: true,
+        auth: {
+          user: 'ilimalybekov@mail.ru',
+          pass: 'inNDgcUiwrBfGFGeXwir'
+        }
+      },
+      {
+        from: 'Mailer Test <ilimalybekov@mail.ru>',
+      }
+  )
+
+  const mailer = message => {
+    transporter.sendMail(message, (err, info) => {
+      if(err) return console.log(err)
+      console.log('Email sent: ', info)
+    })
+  }
+
   try {
     const { email, password, username } = req.body
 
     if (!email || !password || !username) {
       return res.status(400).send({ error: 'Data not valid' })
     }
+
+    const message = {
+      to: req.body.email,
+      subject: 'Поздравялем вы зарегистрировались на нешем сайте',
+      html: `
+        <h2>Поздравляем, вы успешно прошли регистрацию на нешм сайте</h2>
+        <i>данные вашей учетной записи:</i>
+        <ul>
+            <li>login: ${req.body.email}</li>
+            <li>password: ${req.body.pass}</li>
+        </ul>
+        <p>Данное письмо не требует ответа</p>`
+    }
+    mailer(message)
 
     const userData = { email, password, username }
 
@@ -118,7 +167,6 @@ router.post('/facebookLogin', async (req, res) => {
     await user.save({ validateBeforeSave: false })
     return res.send(user)
   } catch (e) {
-    console.log(e)
     return res.status(401).send({ message: 'Facebook token incorrect!' })
   }
 })
@@ -199,6 +247,77 @@ router.post('/googleLogin', async (req, res) => {
     return res.send(user)
   } catch (e) {
     return res.status(401).send({ message: 'Google token incorrect!' })
+  }
+})
+// Добавление теста
+
+// router.put('/add_test', auth, async (req, res) => {
+//   const userId = req.user._id
+//   const testId = req.query.test
+//   try {
+//     const user = await User.findById(userId)
+//     if (!user) {
+//       return res.status(404).send({ message: 'User not found!' })
+//     }
+//     const test = await Test.findById(testId)
+//     if (!test) {
+//       return res.status(404).send({ message: 'Test not found!' })
+//     }
+//     const addTest = await User.findByIdAndUpdate(user, { $push: { tests: { test } } })
+//     return res.send(addTest)
+//   } catch (e) {
+//     return res.status(500)
+//   }
+// })
+
+// Добавление курса со статусом
+router.put('/add_course', auth, async (req, res) => {
+  const courseId = req.query.course
+  const userId = req.user
+  try {
+    const user = await User.findById(userId)
+    const course = await Course.findById(courseId)
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found!' })
+    }
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const addCourse = await User.findByIdAndUpdate(user, { $push: { myCourses: { course } } })
+    return res.send(addCourse)
+  } catch (e) {
+    return res.status(500)
+  }
+})
+
+// Изменение статуса
+
+router.post('/:id/update_status', async (req, res) => {
+  const courseId = req.params.id
+  const userId = req.query.userid
+  try {
+    const course = await Course.findById(courseId)
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found!' })
+    }
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+
+    const updateCourseStatus = await User.update(
+      {
+        _id: userId,
+        'myCourse.course': courseId,
+      },
+      { $set: { 'myCourses.$.status': false } },
+    )
+
+    return res.send(user)
+  } catch (e) {
+    console.log(e)
+    return res.status(500)
   }
 })
 
