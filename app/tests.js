@@ -34,7 +34,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', permit('teacher', 'admin'), async (req, res) => {
+router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
@@ -46,7 +46,7 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
 
     const { title, description, questions } = req.body
 
-    if (!title || !description || !questions) {
+    if (!title) {
       return res.status(401).send({ message: 'Data not valid' })
     }
 

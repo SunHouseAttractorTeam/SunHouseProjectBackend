@@ -5,7 +5,6 @@ const { Schema } = mongoose
 const AnswerSchema = new Schema({
   title: {
     type: String,
-    required: true,
   },
   status: {
     type: Boolean,
@@ -16,7 +15,6 @@ const AnswerSchema = new Schema({
 const QuestionSchema = new Schema({
   title: {
     type: String,
-    required: true,
   },
   answers: [AnswerSchema],
 })
