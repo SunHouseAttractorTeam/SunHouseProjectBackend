@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id).populate('module')
+    const course = await Course.findById(req.params.id).populate('modules')
 
     if (!course) {
       res.status(404).send({ message: 'Course not found!' })
@@ -39,7 +39,6 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, permit('teacher'), async (req, res) => {
   try {
-
     const { title, description, category, price } = req.body
 
     if (!title || !description || !category || !price) {
@@ -54,8 +53,8 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
       dateTime: dayjs().format('DD/MM/YYYY'),
     }
     const course = new Course(courseData)
-      course.owners.push(req.user._id)
-   
+    course.owners.push(req.user._id)
+
     await course.save()
 
     return res.send(course)
