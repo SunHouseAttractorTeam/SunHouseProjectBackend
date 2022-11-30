@@ -45,7 +45,7 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
       return res.status(404).send({ message: 'There are no such module!' })
     }
 
-    if (!title || !description) {
+    if (!title) {
       return res.status(400).send({
         message: 'Data not valid',
       })
@@ -102,7 +102,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
       return res.status(401).send({ message: 'Authorization error' })
     }
 
-    if (!title || !description) {
+    if (!title) {
       return res.status(400).send({
         message: 'Data not valid',
       })
