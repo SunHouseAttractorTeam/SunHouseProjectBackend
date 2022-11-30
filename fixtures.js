@@ -1,9 +1,11 @@
 const mongoose = require('mongoose')
 const { nanoid } = require('nanoid')
+const dayjs = require('dayjs')
 const config = require('./config')
 
 const User = require('./models/User')
 const Category = require('./models/Category')
+const Course = require('./models/Course')
 
 const run = async () => {
   await mongoose.connect(config.mongo.db)
@@ -14,7 +16,7 @@ const run = async () => {
     mongoose.connection.db.dropCollection(coll.name)
   })
 
-  await User.create(
+  const [admin, user, teacher, tom] = await User.create(
     {
       username: 'Admin',
       email: 'admin@gmail.com',
@@ -53,7 +55,7 @@ const run = async () => {
     },
   )
 
-  await Category.create(
+  const [web_des, frontend_dev, uxui_des, clining] = await Category.create(
     {
       title: 'Web-дизайнер',
       description: `Веб-дизайнер проектирует сайты и приложения. 
@@ -72,7 +74,19 @@ const run = async () => {
       description: `дизайнер изучает потребности пользователей, 
       разрабатывает логические схемы работы интерфейса и тестирует их на целевой аудитории`,
     },
+    {
+      title: 'Обучение горничных',
+      description: `бла бла бла`,
+    },
   )
+
+  await Course.create({
+    category: clining._id,
+    title: 'Course test title',
+    description: 'Course test desc',
+    price: 5500,
+    dateTime: dayjs().format('DD/MM/YYYY'),
+  })
 
   await mongoose.connection.close()
 }
