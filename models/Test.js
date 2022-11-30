@@ -31,6 +31,20 @@ const TestSchema = new Schema({
     type: String,
     default: 'Test',
   },
+  count: {
+    type: Number,
+    min: 0,
+    default: 3,
+  },
+  random: {
+    type: Boolean,
+    default: false,
+  },
+  correct: {
+    type: Number,
+    min: 0,
+    max: 100,
+  },
   questions: [QuestionSchema],
   file: String,
   video: String,
