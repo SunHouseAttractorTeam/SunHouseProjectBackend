@@ -337,7 +337,7 @@ router.put('/add_course', auth, async (req, res) => {
 
 // Изменение статуса
 
-router.post('/:id/update_status', auth, permit('admin', 'moderator', 'teacher'), async (req, res) => {
+router.post('/:id/update_status', auth, async (req, res) => {
   const { id } = req.params
   const userId = req.query.userid
   try {
@@ -394,20 +394,21 @@ router.post('/:id/update_status', auth, permit('admin', 'moderator', 'teacher'),
         if (!task) {
           return res.status(404).send({ message: 'Task not found!' })
         }
-        await User.update(
-          {
-            _id: userId,
-            'tasks.task': id,
-          },
-          { $set: { 'tasks.$.status': false } },
-        )
+        if (user.role === 'teacher') {
+          await User.update(
+            {
+              _id: userId,
+              'tasks.task': id,
+            },
+            { $set: { 'tasks.$.status': false } },
+          )
+        }
         return res.send(user)
       }
       default:
         return res.send(user)
     }
   } catch (e) {
-    console.log(e)
     return res.status(500)
   }
 })
