@@ -120,17 +120,14 @@ const run = async () => {
     {
       title: 'Module 1',
       course: course1._id,
-      datetime: dayjs().format('DD/MM/YYYY'),
     },
     {
       title: 'Module 2',
       course: course1._id,
-      datetime: dayjs().format('DD/MM/YYYY'),
     },
     {
       title: 'Module 3',
       course: course2._id,
-      datetime: dayjs().format('DD/MM/YYYY'),
     },
   )
 
