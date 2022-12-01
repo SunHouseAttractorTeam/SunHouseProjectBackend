@@ -34,7 +34,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', permit('teacher', 'admin'), async (req, res) => {
+router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
@@ -44,9 +44,9 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
       return res.status(404).send({ message: 'There are no such module!' })
     }
 
-    const { title, description, questions } = req.body
+    const { title, description, random, correct, count, questions } = req.body
 
-    if (!title || !description || !questions) {
+    if (!title) {
       return res.status(401).send({ message: 'Data not valid' })
     }
 
@@ -54,6 +54,7 @@ router.post('/', permit('teacher', 'admin'), async (req, res) => {
       title,
       description,
       questions,
+      random, correct, count,
       file: null,
       video: null,
       audio: null,
@@ -97,7 +98,7 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
     const courseId = req.query.courses
 
     const course = await Course.findById(courseId)
-    const { title, description, questions } = req.body
+    const { title, description, questions, random, correct, count } = req.body
 
     if (!course) return res.status(404).send({ message: 'There are no such course' })
 
@@ -113,6 +114,8 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
       title,
       description,
       questions,
+      random,
+      correct, count,
       file: null,
       video: null,
       audio: null,
