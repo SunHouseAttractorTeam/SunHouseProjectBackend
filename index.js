@@ -14,7 +14,7 @@ const tasks = require('./app/tasks')
 
 const lessons = require('./app/lessons')
 const tests = require('./app/tests')
-const modules = require('./app/module')
+const modules = require('./app/modules')
 
 
 const app = express()
@@ -24,11 +24,11 @@ app.use(express.static('public'))
 app.use(express.json())
 app.use(cookieParser())
 app.use(
-  cors({
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    origin: ['http://localhost:3000'],
-  }),
+    cors({
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        origin: ['http://localhost:3000'],
+    }),
 )
 
 app.use('/categories', categories)
@@ -41,16 +41,16 @@ app.use('/tests', tests)
 app.use('/modules', modules)
 
 const run = async () => {
-  await mongoose.connect(config.mongo.db, config.mongo.options)
-  console.log('Mongo connected')
-  app.listen(port, () => {
-    console.log(`Server started on ${port} port!`)
-  })
+    await mongoose.connect(config.mongo.db, config.mongo.options)
+    console.log('Mongo connected')
+    app.listen(port, () => {
+        console.log(`Server started on ${port} port!`)
+    })
 
-  exitHook(() => {
-    mongoose.disconnect()
-    console.log('MongoDb disconnect')
-  })
+    exitHook(() => {
+        mongoose.disconnect()
+        console.log('MongoDb disconnect')
+    })
 }
 
 run().catch(e => console.error(e))
