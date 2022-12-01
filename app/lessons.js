@@ -76,9 +76,9 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
     await lesson.save()
 
     module.data.push({
-      id: lessonData._id,
-      type: lessonData.type,
-      title: lessonData.title,
+      id: lesson._id,
+      type: lesson.type,
+      title: lesson.title,
     })
 
     await module.save()
