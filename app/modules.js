@@ -8,6 +8,7 @@ const Course = require('../models/Course')
 
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
+const searchAccesser = require('../middleweare/searchAccesser')
 
 router.get('/', auth, async (req, res) => {
   try {
@@ -30,7 +31,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
+router.post('/', auth, permit('teacher'), searchAccesser, async (req, res) => {
   try {
     const { title } = req.body
     const { course } = req.query
@@ -55,7 +56,7 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
+router.put('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
   try {
     const { id } = req.params
     const { title } = req.body
@@ -75,7 +76,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
   try {
     const { id } = req.params
     const { course } = req.query
