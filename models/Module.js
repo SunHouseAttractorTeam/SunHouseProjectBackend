@@ -1,4 +1,7 @@
 const mongoose = require('mongoose')
+const Task = require('./Task')
+const Lesson = require('./Lesson')
+const Test = require('./Test')
 
 const { Schema } = mongoose
 
@@ -13,6 +16,16 @@ const ModuleSchema = new Schema({
     required: true,
   },
   data: [],
+})
+
+ModuleSchema.pre('deleteOne', async function (next) {
+  const moduleId = this._conditions._id
+
+  await Task.deleteMany({ module: moduleId })
+  await Lesson.deleteMany({ module: moduleId })
+  await Test.deleteMany({ module: moduleId })
+
+  next()
 })
 
 const Module = mongoose.model('Module', ModuleSchema)

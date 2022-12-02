@@ -93,7 +93,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
 
     if (!course) return res.status(404).send({ message: 'There are no such course!' })
 
-    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
       return res.status(401).send({ message: 'Authorization error' })
     }
 
@@ -163,7 +163,7 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
     const task = await Task.findById(req.params.id)
     const course = await Course.findById(req.query.course)
 
-    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
       return res.status(401).send('Authoeization error')
     }
     if (!module) return res.status(404).send({ message: 'Module not found' })

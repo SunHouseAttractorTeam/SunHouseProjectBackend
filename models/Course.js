@@ -29,7 +29,7 @@ const CourseSchema = new Schema({
   },
   rating: [RatingSchema],
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  owners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   modules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Module' }],
   category: {
     type: mongoose.Schema.Types.ObjectId,

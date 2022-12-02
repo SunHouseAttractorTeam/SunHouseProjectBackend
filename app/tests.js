@@ -54,7 +54,9 @@ router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
       title,
       description,
       questions,
-      random, correct, count,
+      random,
+      correct,
+      count,
       file: null,
       video: null,
       audio: null,
@@ -102,7 +104,7 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
 
     if (!course) return res.status(404).send({ message: 'There are no such course' })
 
-    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
       return res.status(404).send({ message: 'Authorization error!' })
     }
 
@@ -115,7 +117,8 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
       description,
       questions,
       random,
-      correct, count,
+      correct,
+      count,
       file: null,
       video: null,
       audio: null,
@@ -182,7 +185,7 @@ router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
 
     if (!course) return res.status(404).send({ message: 'Course not found!' })
 
-    if (!course.owners.includes(req.user._id.toString()) || req.user.role !== 'admin') {
+    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
       return res.status(404).send({ message: 'Authorization error!' })
     }
 

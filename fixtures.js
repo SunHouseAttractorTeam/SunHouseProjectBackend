@@ -98,7 +98,7 @@ const run = async () => {
         { user: admin, value: 0 },
         { user, value: 3 },
       ],
-      owners: [tom],
+      teachers: [teacher, tom],
       users: [user],
     },
     {
@@ -112,6 +112,8 @@ const run = async () => {
         { user: admin, value: 5 },
         { user, value: 5 },
       ],
+      teachers: [teacher],
+      users: [user, tom],
       category: frontendDev._id,
       price: 10000,
       dateTime: dayjs().format('DD/MM/YYYY'),
