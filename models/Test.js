@@ -29,7 +29,7 @@ const TestSchema = new Schema({
   },
   type: {
     type: String,
-    default: 'Test',
+    default: 'test',
   },
   module: {
     type: Schema.Types.ObjectId,

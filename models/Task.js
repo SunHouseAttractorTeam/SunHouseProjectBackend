@@ -13,7 +13,7 @@ const TaskSchema = new Schema({
   },
   type: {
     type: String,
-    default: 'Task',
+    default: 'task',
   },
   module: {
     type: Schema.Types.ObjectId,
