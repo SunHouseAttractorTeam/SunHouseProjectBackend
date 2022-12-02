@@ -97,6 +97,8 @@ const run = async () => {
         { user: admin, value: 0 },
         { user, value: 3 },
       ],
+      owners: [tom],
+      users: [user],
     },
     {
       user: teacher._id,
@@ -133,7 +135,6 @@ const run = async () => {
 
   await course1.updateOne({ $push: { modules: [module, module2] } })
   await course2.updateOne({ $push: { modules: module3 } })
-  await course1.updateOne({ $push: { users: user } })
 
   const [task1, task2, task3, task4, task5, task6, task7, task8] = await Task.create(
     {
