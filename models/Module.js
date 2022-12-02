@@ -12,10 +12,6 @@ const ModuleSchema = new Schema({
     ref: 'Course',
     required: true,
   },
-  datetime: {
-    type: String,
-    required: true,
-  },
   data: [],
 })
 

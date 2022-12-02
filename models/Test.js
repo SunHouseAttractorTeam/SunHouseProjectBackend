@@ -31,6 +31,11 @@ const TestSchema = new Schema({
     type: String,
     default: 'Test',
   },
+  module: {
+    type: Schema.Types.ObjectId,
+    ref: 'Module',
+    required: true,
+  },
   count: {
     type: Number,
     min: 0,

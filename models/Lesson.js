@@ -14,6 +14,11 @@ const LessonSchema = new Schema({
     type: String,
     default: 'Lesson',
   },
+  module: {
+    type: Schema.Types.ObjectId,
+    ref: 'Module',
+    required: true,
+  },
   file: String,
   video: String,
   audio: String,
