@@ -11,6 +11,15 @@ const TaskSchema = new Schema({
   description: {
     type: String,
   },
+  type: {
+    type: String,
+    default: 'task',
+  },
+  module: {
+    type: Schema.Types.ObjectId,
+    ref: 'Module',
+    required: true,
+  },
   file: String,
   video: String,
   audio: String,

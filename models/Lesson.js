@@ -12,7 +12,12 @@ const LessonSchema = new Schema({
   },
   type: {
     type: String,
-    default: 'Lesson',
+    default: 'lesson',
+  },
+  module: {
+    type: Schema.Types.ObjectId,
+    ref: 'Module',
+    required: true,
   },
   file: String,
   video: String,

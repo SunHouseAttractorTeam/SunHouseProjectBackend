@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 const { Schema } = mongoose
 
 const bcrypt = require('bcrypt')
-const fs = require('fs')
 
 const SALT_WORK_FACTOR = 10
 
