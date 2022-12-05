@@ -38,6 +38,21 @@ router.get('/', async (req, res) => {
   }
 })
 
+router.get('/confirm/:confirmationCode', async (req, res) => {
+  try {
+    console.log(req.params.confirmationCode)
+    const user = await User.findOne({ confirmationCode: req.params.confirmationCode })
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' })
+    }
+    user.authentication = true
+    await user.save({ validateBeforeSave: false })
+    return res.send({ message: 'Account confirm' })
+  } catch (e) {
+    return res.status(500).send({ message: e })
+  }
+})
+
 router.post('/', async (req, res) => {
   try {
     const secretToken = getLiveSecretCookie({ email: req.body.email })
@@ -68,25 +83,6 @@ router.post('/', async (req, res) => {
   } catch (e) {
     return res.status(400).send(e)
   }
-})
-
-router.get('/confirm/:confirmationCode', (req, res) => {
-  User.findOne({
-    confirmationCode: req.params.confirmationCode,
-  })
-    .then(user => {
-      if (!user) {
-        return res.status(404).send({ message: 'User Not Found' })
-      }
-
-      user.authentication = true
-      user.save(err => {
-        if (err) {
-          res.status(500).send({ message: err })
-        }
-      })
-    })
-    .catch(err => console.log('error', err))
 })
 
 router.post('/sessions', async (req, res) => {

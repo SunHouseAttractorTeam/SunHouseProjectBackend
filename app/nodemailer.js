@@ -12,9 +12,6 @@ const transporter = nodemailer.createTransport({
 })
 
 module.exports.sendConfirmationCode = (name, email, confirmationCode) => {
-  console.log('NAME: ', name)
-  console.log('email: ', email)
-  console.log('confirmationCode: ', confirmationCode)
   transporter
     .sendMail({
       from: process.env.USER_GMAIL,

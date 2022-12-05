@@ -74,7 +74,7 @@ const UserSchema = new Schema({
     unique: true,
     validate: [
       { validator: validateEmail, message: 'Email is not valid!' },
-      { validator: validateUnique, message: 'This user is already registered' },
+      { validator: validateUnique, message: 'kThis user is already registered' },
     ],
   },
   confirmationCode: {
@@ -103,7 +103,7 @@ const UserSchema = new Schema({
     required: true,
   },
   authentication: {
-    type: String,
+    type: Boolean,
     default: false,
   },
   myCourses: [MyCourses],
