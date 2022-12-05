@@ -77,6 +77,10 @@ const UserSchema = new Schema({
       { validator: validateUnique, message: 'This user is already registered' },
     ],
   },
+  confirmationCode: {
+    type: String,
+    unique: true,
+  },
   password: {
     type: String,
     required: true,
@@ -99,7 +103,7 @@ const UserSchema = new Schema({
     required: true,
   },
   authentication: {
-    type: Boolean,
+    type: String,
     default: false,
   },
   myCourses: [MyCourses],

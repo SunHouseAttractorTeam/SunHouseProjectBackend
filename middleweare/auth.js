@@ -10,7 +10,6 @@ const auth = async (req, res, next) => {
     return res.status(401).send({ error: 'Wrong token!' })
   }
   req.user = user
-
   next()
 }
 

@@ -3,9 +3,9 @@ const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
-const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const config = require('../config')
+const nodemailer = require('./nodemailer')
 
 const client = new OAuth2Client()
 const router = express.Router()
@@ -15,10 +15,17 @@ const auth = require('../middleweare/auth')
 const Course = require('../models/Course')
 const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
+const Task = require('../models/Task')
 
 const getLiveCookie = user => {
   const { username } = user
   const maxAge = 730 * 60 * 60
+  return { token: utils.getToken(username, maxAge), maxAge }
+}
+
+const getLiveSecretCookie = user => {
+  const { username } = user
+  const maxAge = 5 * 60 * 60
   return { token: utils.getToken(username, maxAge), maxAge }
 }
 
@@ -32,68 +39,54 @@ router.get('/', async (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-  const transporter = nodemailer.createTransport(
-    {
-      host: 'smtp.mail.ru',
-      port: 465,
-      secure: true,
-      auth: {
-        user: 'ilimalybekov@mail.ru',
-        pass: 'inNDgcUiwrBfGFGeXwir',
-      },
-    },
-    {
-      from: 'Mailer Test <ilimalybekov@mail.ru>',
-    },
-  )
-
-  const mailer = message => {
-    transporter.sendMail(message, (err, info) => {
-      if (err) return console.log(err)
-      console.log('Email sent: ', info)
-    })
-  }
-
   try {
+    const secretToken = getLiveSecretCookie({ email: req.body.email })
     const { email, password, username } = req.body
 
     if (!email || !password || !username) {
       return res.status(400).send({ error: 'Data not valid' })
     }
 
-    const message = {
-      to: req.body.email,
-      subject: 'Поздравялем вы зарегистрировались на нешем сайте',
-      html: `
-        <h2>Поздравляем, вы успешно прошли регистрацию на нешм сайте</h2>
-        <i>данные вашей учетной записи:</i>
-        <ul>
-            <li>login: ${req.body.email}</li>
-            <li>password: ${req.body.pass}</li>
-        </ul>
-        <p>Данное письмо не требует ответа</p>`,
-    }
-    mailer(message)
-
-    const userData = { email, password, username }
+    const userData = { email, password, username, confirmationCode: secretToken.token }
 
     const user = new User(userData)
 
     const { token, maxAge } = getLiveCookie(user)
 
-    res.cookie('jwt', token, {
-      httpOnly: false,
-      maxAge: maxAge * 1000,
-    })
+    // res.cookie('jwt', token, {
+    //     httpOnly: false,
+    //     maxAge: maxAge * 1000,
+    // })
 
     user.token = token
 
     await user.save()
 
+    nodemailer.sendConfirmationCode(user.username, user.email, user.confirmationCode)
+
     return res.status(201).send(user)
   } catch (e) {
     return res.status(400).send(e)
   }
+})
+
+router.get('/confirm/:confirmationCode', (req, res) => {
+  User.findOne({
+    confirmationCode: req.params.confirmationCode,
+  })
+    .then(user => {
+      if (!user) {
+        return res.status(404).send({ message: 'User Not Found' })
+      }
+
+      user.authentication = true
+      user.save(err => {
+        if (err) {
+          res.status(500).send({ message: err })
+        }
+      })
+    })
+    .catch(err => console.log('error', err))
 })
 
 router.post('/sessions', async (req, res) => {
@@ -107,6 +100,10 @@ router.post('/sessions', async (req, res) => {
 
     if (!user) {
       return res.status(401).send({ error: 'Credentials are wrong!' })
+    }
+
+    if (user.authentication !== true) {
+      return res.status(401).send({ message: 'Pending account. Please verify your email' })
     }
 
     const isMatch = await user.checkPassword(req.body.password)
