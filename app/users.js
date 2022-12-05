@@ -7,9 +7,15 @@ const User = require('../models/User')
 const config = require('../config')
 const nodemailer = require('./nodemailer')
 
-const client = new OAuth2Client(config.google.clientId)
+const client = new OAuth2Client()
 const router = express.Router()
 const utils = require('../middleweare/token')
+const permit = require('../middleweare/permit')
+const auth = require('../middleweare/auth')
+const Course = require('../models/Course')
+const Test = require('../models/Test')
+const Lesson = require('../models/Lesson')
+const Task = require('../models/Task')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -22,6 +28,15 @@ const getLiveSecretCookie = user => {
   const maxAge = 5 * 60 * 60
   return { token: utils.getToken(username, maxAge), maxAge }
 }
+
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find()
+    return res.send(users)
+  } catch (e) {
+    return res.status(500)
+  }
+})
 
 router.post('/', async (req, res) => {
   try {
@@ -45,15 +60,12 @@ router.post('/', async (req, res) => {
 
     user.token = token
 
-    console.dir(user, { depth: null, maxArrayLength: null })
-
     await user.save()
 
     nodemailer.sendConfirmationCode(user.username, user.email, user.confirmationCode)
 
     return res.status(201).send(user)
   } catch (e) {
-    console.log(e)
     return res.status(400).send(e)
   }
 })
@@ -154,14 +166,13 @@ router.post('/facebookLogin', async (req, res) => {
     await user.save({ validateBeforeSave: false })
     return res.send(user)
   } catch (e) {
-    console.log(e)
     return res.status(401).send({ message: 'Facebook token incorrect!' })
   }
 })
 
 router.post('/vkLogin', async (req, res) => {
   const api = new VKAPI({
-    accessToken: config.vk.personalToken,
+    accessToken: req.body.session.sid,
   })
 
   try {
@@ -192,6 +203,7 @@ router.post('/vkLogin', async (req, res) => {
       maxAge: maxAge * 1000,
     })
 
+    userIs.token = token
     await userIs.save({ validateBeforeSave: false })
 
     return res.send(userIs)
@@ -235,6 +247,167 @@ router.post('/googleLogin', async (req, res) => {
     return res.send(user)
   } catch (e) {
     return res.status(401).send({ message: 'Google token incorrect!' })
+  }
+})
+
+// Добавление таска
+
+router.put('/add_task', auth, async (req, res) => {
+  const userId = req.user._id
+  const taskId = req.query.task
+  try {
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const task = await Task.findById(taskId)
+    if (!task) {
+      return res.status(404).send({ message: 'Task not found!' })
+    }
+    const addTask = await User.findByIdAndUpdate(user, { $push: { tasks: { task } } })
+    return res.send(addTask)
+  } catch (e) {
+    return res.status(500)
+  }
+})
+
+// Добавление урока со статусом
+
+router.put('/add_lesson', auth, async (req, res) => {
+  const userId = req.user._id
+  const lessonId = req.query.lesson
+  try {
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const lesson = await Lesson.findById(lessonId)
+    if (!lesson) {
+      return res.status(404).send({ message: 'Lesson not found!' })
+    }
+    const addLesson = await User.findByIdAndUpdate(user, { $push: { lessons: { lesson } } })
+    return res.send(addLesson)
+  } catch (e) {
+    return res.status(500)
+  }
+})
+
+// Добавление теста c счетчиком и статусом
+
+router.put('/add_test', auth, async (req, res) => {
+  const userId = req.user._id
+  const testId = req.query.test
+  try {
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const test = await Test.findById(testId)
+    if (!test) {
+      return res.status(404).send({ message: 'Test not found!' })
+    }
+    const addTest = await User.findByIdAndUpdate(user, { $push: { tests: { test } } })
+    return res.send(addTest)
+  } catch (e) {
+    return res.status(500)
+  }
+})
+
+// Добавление курса со статусом
+router.put('/add_course', auth, async (req, res) => {
+  const courseId = req.query.course
+  const userId = req.user
+  try {
+    const user = await User.findById(userId)
+    const course = await Course.findById(courseId)
+    if (!course) {
+      return res.status(404).send({ message: 'Course not found!' })
+    }
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    const addCourse = await User.findByIdAndUpdate(user, { $push: { myCourses: { course } } })
+    return res.send(addCourse)
+  } catch (e) {
+    return res.status(500)
+  }
+})
+
+// Изменение статуса
+
+router.post('/:id/update_status', auth, async (req, res) => {
+  const { id } = req.params
+  const userId = req.query.userid
+  try {
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found!' })
+    }
+    switch (req.query.params) {
+      case 'course': {
+        const course = await Course.findById(id)
+        if (!course) {
+          return res.status(404).send({ message: 'Course not found!' })
+        }
+        await User.update(
+          {
+            _id: userId,
+            'myCourse.course': id,
+          },
+          { $set: { 'myCourses.$.status': false } },
+        )
+        return res.send(user)
+      }
+      case 'test': {
+        const test = await Test.findById(id)
+        if (!test) {
+          return res.status(404).send({ message: 'Test not found!' })
+        }
+        await User.update(
+          {
+            _id: userId,
+            'tests.test': id,
+          },
+          { $set: { 'tests.$.status': false } },
+        )
+        return res.send(user)
+      }
+      case 'lesson': {
+        const lesson = await Lesson.findById(id)
+        if (!lesson) {
+          return res.status(404).send({ message: 'Lesson not found!' })
+        }
+        await User.update(
+          {
+            _id: userId,
+            'lessons.lesson': id,
+          },
+          { $set: { 'lessons.$.status': false } },
+        )
+        return res.send(user)
+      }
+      case 'task': {
+        const task = await Task.findById(id)
+        if (!task) {
+          return res.status(404).send({ message: 'Task not found!' })
+        }
+        if (user.role === 'teacher') {
+          await User.update(
+            {
+              _id: userId,
+              'tasks.task': id,
+            },
+            { $set: { 'tasks.$.status': false } },
+          )
+        }
+        return res.send(user)
+      }
+      default:
+        return res.send(user)
+    }
+  } catch (e) {
+    return res.status(500)
   }
 })
 

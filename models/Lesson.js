@@ -2,18 +2,17 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const TaskSchema = new Schema({
+const LessonSchema = new Schema({
   title: {
     type: String,
     required: true,
-    unique: true,
   },
   description: {
     type: String,
   },
   type: {
     type: String,
-    default: 'task',
+    default: 'lesson',
   },
   module: {
     type: Schema.Types.ObjectId,
@@ -25,6 +24,5 @@ const TaskSchema = new Schema({
   audio: String,
 })
 
-const Task = mongoose.model('Task', TaskSchema)
-
-module.exports = Task
+const Lesson = mongoose.model('Lesson', LessonSchema)
+module.exports = Lesson
