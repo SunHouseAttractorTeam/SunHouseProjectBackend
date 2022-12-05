@@ -76,10 +76,10 @@ router.put('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => 
   }
 })
 
-router.delete('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
+router.delete('/', auth, permit('teacher'), searchAccesser, async (req, res) => {
   try {
-    const { id } = req.params
-    const { course } = req.query
+    const { course, id } = req.query
+
     const modules = await Module.findById(id)
 
     if (!modules) {
