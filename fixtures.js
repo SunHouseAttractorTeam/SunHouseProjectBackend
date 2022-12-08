@@ -153,8 +153,8 @@ const run = async () => {
     },
   )
 
-  await module.updateOne({ $push: { data: lesson1 } })
-  await module2.updateOne({ $push: { data: lesson2 } })
+  await module.updateOne({ $push: { data: { title: lesson1.title, type: lesson1.type, id: lesson1._id } } })
+  await module2.updateOne({ $push: { data: { title: lesson2.title, type: lesson2.type, id: lesson2._id } } })
 
   const [task1, task2, task3, task4, task5, task6, task7, task8] = await Task.create(
     {
@@ -199,14 +199,14 @@ const run = async () => {
     },
   )
 
-  await module.updateOne({ $push: { data: task1 } })
-  await module.updateOne({ $push: { data: task2 } })
-  await module.updateOne({ $push: { data: task3 } })
-  await module.updateOne({ $push: { data: task4 } })
-  await module2.updateOne({ $push: { data: task5 } })
-  await module2.updateOne({ $push: { data: task6 } })
-  await module2.updateOne({ $push: { data: task7 } })
-  await module3.updateOne({ $push: { data: task8 } })
+  await module.updateOne({ $push: { data: { title: task1.title, type: task1.type, id: task1._id } } })
+  await module.updateOne({ $push: { data: { title: task2.title, type: task2.type, id: task2._id } } })
+  await module.updateOne({ $push: { data: { title: task3.title, type: task3.type, id: task3._id } } })
+  await module.updateOne({ $push: { data: { title: task4.title, type: task4.type, id: task4._id } } })
+  await module2.updateOne({ $push: { data: { title: task5.title, type: task5.type, id: task5._id } } })
+  await module2.updateOne({ $push: { data: { title: task6.title, type: task6.type, id: task6._id } } })
+  await module2.updateOne({ $push: { data: { title: task7.title, type: task7.type, id: task7._id } } })
+  await module3.updateOne({ $push: { data: { title: task8.title, type: task8.type, id: task8._id } } })
 
   const [test1, test2, test3, test4, test5] = await Test.create(
     {
@@ -266,11 +266,11 @@ const run = async () => {
     },
   )
 
-  await module.updateOne({ $push: { data: test1 } })
-  await module.updateOne({ $push: { data: test2 } })
-  await module2.updateOne({ $push: { data: test3 } })
-  await module2.updateOne({ $push: { data: test4 } })
-  await module3.updateOne({ $push: { data: test5 } })
+  await module.updateOne({ $push: { data: { title: test1.title, type: test1.type, id: test1._id } } })
+  await module.updateOne({ $push: { data: { title: test2.title, type: test2.type, id: test2._id } } })
+  await module2.updateOne({ $push: { data: { title: test3.title, type: test3.type, id: test3._id } } })
+  await module2.updateOne({ $push: { data: { title: test4.title, type: test4.type, id: test4._id } } })
+  await module3.updateOne({ $push: { data: { title: test5.title, type: test5.type, id: test5._id } } })
 
   await Reviews.create(
     {

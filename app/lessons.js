@@ -4,6 +4,8 @@ const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
 const Course = require('../models/Course')
 const permit = require('../middleweare/permit')
+const searchAccesser = require('../middleweare/searchAccesser')
+const upload = require('../middleweare/upload')
 
 const router = express.Router()
 
@@ -34,11 +36,12 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
+router.post('/', auth, upload.array('audio'), permit('teacher'), searchAccesser, async (req, res) => {
   const moduleId = req.query.module
-
+  console.log(req.file)
+  console.log(req.body)
   try {
-    const { title, description } = req.body
+    const { title } = req.body
     const module = await Module.findById(moduleId)
 
     if (!module) {
@@ -53,23 +56,7 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
 
     const lessonData = {
       title,
-      description,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          lessonData.file = req.file.file
-          break
-        case 'video':
-          lessonData.video = req.file.file
-          break
-        case 'audio':
-          lessonData.audio = req.file.file
-          break
-        default:
-          return lessonData
-      }
+      module: moduleId,
     }
 
     const lesson = new Lesson(lessonData)
@@ -88,19 +75,14 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
-  const moduleId = req.query.module
+router.put('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
   const courseId = req.query.course
 
   try {
-    const { title, description } = req.body
+    const { title } = req.body
     const course = await Course.findById(courseId)
 
     if (!course) return res.status(404).send({ message: 'There are no such course' })
-
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(401).send({ message: 'Authorization error' })
-    }
 
     if (!title) {
       return res.status(400).send({
@@ -110,23 +92,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
 
     const lessonData = {
       title,
-      description,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          lessonData.file = req.file.file
-          break
-        case 'video':
-          lessonData.video = req.file.file
-          break
-        case 'audio':
-          lessonData.audio = req.file.file
-          break
-        default:
-          return lessonData
-      }
+      data: req.body.data,
     }
 
     const lesson = await Lesson.findById(req.params.id)
@@ -138,7 +104,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
     const updateLesson = await Lesson.findByIdAndUpdate(req.params.id, lessonData, { new: true })
 
     if (lesson.title !== updateLesson.title) {
-      const module = await Module.findOne({ _id: moduleId })
+      const module = await Module.findOne({ _id: lesson.module })
 
       if (!module) {
         return res.status(404).send({ message: 'There are no such module!' })
@@ -165,7 +131,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
+router.delete('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.course
@@ -177,10 +143,6 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
     }
 
     if (!course) return res.status(404).send({ message: 'Course not found!' })
-
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(401).send({ message: 'Authorization error' })
-    }
 
     const response = await Lesson.deleteOne({ _id: req.params.id })
 
