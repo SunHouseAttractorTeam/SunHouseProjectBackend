@@ -36,10 +36,8 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, upload.array('audio'), permit('teacher'), searchAccesser, async (req, res) => {
+router.post('/', auth, permit('teacher'), searchAccesser, async (req, res) => {
   const moduleId = req.query.module
-  console.log(req.file)
-  console.log(req.body)
   try {
     const { title } = req.body
     const module = await Module.findById(moduleId)
@@ -75,14 +73,14 @@ router.post('/', auth, upload.array('audio'), permit('teacher'), searchAccesser,
   }
 })
 
-router.put('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
-  const courseId = req.query.course
+router.put('/:id', auth, upload.any('audio'), permit('teacher'), searchAccesser, async (req, res) => {
+  // const courseId = req.query.course
 
   try {
     const { title } = req.body
-    const course = await Course.findById(courseId)
-
-    if (!course) return res.status(404).send({ message: 'There are no such course' })
+    // const course = await Course.findById(courseId)
+    //
+    // if (!course) return res.status(404).send({ message: 'There are no such course' })
 
     if (!title) {
       return res.status(400).send({
