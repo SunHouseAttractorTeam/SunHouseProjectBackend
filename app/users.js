@@ -459,7 +459,7 @@ router.post('/reset/:resetPasswordToken', async (req, res) => {
 
   await user.save({ validateBeforeSave: false })
 
-  nodemailer.resetPassword()
+  nodemailer.resetPassword(user.username, user.email)
 
   return res.send({ message: 'Ваш пароль успешно изменен' })
 })

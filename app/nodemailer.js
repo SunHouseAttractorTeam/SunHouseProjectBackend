@@ -41,3 +41,18 @@ module.exports.sendForgotPassword = (email, hash) => {
     })
     .catch(err => console.error(err))
 }
+
+module.exports.resetPassword = (email, name) => {
+  transporter
+    .sendMail({
+      from: process.env.USER_GMAIL,
+      to: email,
+      subject: 'Сброс пароля',
+      html: `
+           <h3>Сброс пароля</h3>
+           <p>Здравствуйте ${name}</p>
+           <p>Ваш пароль успешно изменен</p>
+        `,
+    })
+    .catch(err => console.error(err))
+}
