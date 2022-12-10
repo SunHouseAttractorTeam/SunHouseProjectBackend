@@ -29,9 +29,9 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
     try {
-        const {text, socialNetwork, user} = req.body
+        const {text, socialNetwork} = req.body
 
-        if (!text || !socialNetwork || !user) {
+        if (!text || !socialNetwork) {
             return res.status(400).send({
                 message: 'Data not valid',
             })
@@ -39,7 +39,7 @@ router.post('/', auth, async (req, res) => {
 
         const reviewData = {
             text,
-            user,
+            user: req.user._id,
             socialNetwork
         }
 
@@ -52,17 +52,17 @@ router.post('/', auth, async (req, res) => {
     }
 })
 
-router.put('/:id',  async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
     try {
-        const { text, socialNetwork, user } = req.body
+        const { text, socialNetwork } = req.body
 
-        if (!text || !socialNetwork || !user) {
+        if (!text || !socialNetwork ) {
             return res.status(400).send({ error: 'Data not valid' })
         }
 
         const reviewData = {
             text,
-            user,
+            user: req.user._id,
             socialNetwork
         }
 
@@ -79,7 +79,7 @@ router.put('/:id',  async (req, res) => {
     }
 })
 
-router.delete('/:id',  async (req, res) => {
+router.delete('/:id',  auth, async (req, res) => {
     try {
         const review = await Review.findById(req.params.id)
 
