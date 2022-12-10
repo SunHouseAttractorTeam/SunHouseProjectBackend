@@ -73,10 +73,26 @@ router.post('/', auth, permit('teacher'), searchAccesser, async (req, res) => {
   }
 })
 
-router.put('/:id', auth, upload.any('audio'), permit('teacher'), searchAccesser, async (req, res) => {
+router.put('/:id', auth, upload.array('audio'), permit('teacher'), searchAccesser, async (req, res) => {
   // const courseId = req.query.course
 
   try {
+    const files = [...req.files]
+    console.log(files)
+    const allData = [...JSON.parse(req.body.payload)]
+    const allData2 = allData.map(item => {
+      const keyName = Object.keys(item)[0]
+      if (files.length) {
+        if (keyName === files[0].fieldname) {
+          item.audio = files[0].filename
+          files.splice(0, 1)
+        }
+      }
+
+      return item
+    })
+    console.dir(allData2, { depth: null, maxArrayLength: null })
+
     const { title } = req.body
     // const course = await Course.findById(courseId)
     //
