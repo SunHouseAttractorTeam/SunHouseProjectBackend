@@ -1,6 +1,7 @@
 const express = require('express')
 const Review = require("../models/Review");
 const auth = require("../middleweare/auth");
+const permit = require("../middleweare/permit");
 
 const router = express.Router()
 
@@ -52,7 +53,7 @@ router.post('/', auth, async (req, res) => {
     }
 })
 
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id',  permit('admin', 'user'), auth, async (req, res) => {
     try {
         const { text, socialNetwork } = req.body
 
@@ -79,7 +80,7 @@ router.put('/:id', auth, async (req, res) => {
     }
 })
 
-router.delete('/:id',  auth, async (req, res) => {
+router.delete('/:id',  permit('admin'), auth, async (req, res) => {
     try {
         const review = await Review.findById(req.params.id)
 
