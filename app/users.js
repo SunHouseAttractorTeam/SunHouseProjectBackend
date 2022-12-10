@@ -3,6 +3,10 @@ const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
+const validator = require('email-validator')
+const crypto = require('crypto')
+const e = require('express')
+const { hash } = require('bcrypt')
 const User = require('../models/User')
 const config = require('../config')
 const nodemailer = require('./nodemailer')
@@ -40,7 +44,6 @@ router.get('/', async (req, res) => {
 
 router.get('/confirm/:confirmationCode', async (req, res) => {
   try {
-    console.log(req.params.confirmationCode)
     const user = await User.findOne({ confirmationCode: req.params.confirmationCode })
     if (!user) {
       return res.status(404).send({ message: 'User not found' })
@@ -423,6 +426,42 @@ router.delete('/sessions', async (req, res) => {
   await user.save({ validateBeforeSave: false })
 
   return res.send({ success, user })
+})
+
+router.post('/forgot', async (req, res) => {
+  const buf = crypto.randomBytes(20)
+  const hash = buf.toString('hex')
+
+  if (!validator.validate(req.body.email)) {
+    e.email = {
+      message: 'Email not found',
+    }
+  }
+
+  const user = await User.findOne({ email: req.body.email })
+  if (!user) return res.status(404).send({ error: 'User not found' })
+
+  user.resetPasswordToken = hash
+  user.resetPasswordExpires = Date.now() + 360000
+  await user.save({ validateBeforeSave: false })
+
+  nodemailer.sendForgotPassword(user.email, user.resetPasswordToken)
+
+  return res.send({ message: `На почту ${user.email} было отправлено письмо с восстановлением пароля` })
+})
+
+router.post('/reset/:resetPasswordToken', async (req, res) => {
+  const user = await User.findOne({ resetPasswordToken: req.params.hash })
+
+  user.password = req.body.newPassword
+  user.resetPasswordToken = undefined
+  user.resetPasswordExpires = undefined
+
+  await user.save({ validateBeforeSave: false })
+
+  nodemailer.resetPassword()
+
+  return res.send({ message: 'Ваш пароль успешно изменен' })
 })
 
 module.exports = router

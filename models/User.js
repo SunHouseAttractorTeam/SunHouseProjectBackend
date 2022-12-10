@@ -110,6 +110,8 @@ const UserSchema = new Schema({
   tests: [Tests],
   lessons: [Lessons],
   tasks: [Tasks],
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 })
 
 UserSchema.pre('save', async function (next) {
