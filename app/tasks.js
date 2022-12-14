@@ -34,7 +34,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
+router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
@@ -86,7 +86,7 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
+router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const course = await Course.findById(req.query.course)
     const { title, description } = req.body
@@ -158,7 +158,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
+router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const task = await Task.findById(req.params.id)
     const course = await Course.findById(req.query.course)

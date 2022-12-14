@@ -31,7 +31,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('teacher'), searchAccesser, async (req, res) => {
+router.post('/', auth, searchAccesser, async (req, res) => {
   try {
     const { title } = req.body
     const { course } = req.query
@@ -56,7 +56,7 @@ router.post('/', auth, permit('teacher'), searchAccesser, async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
+router.put('/:id', auth, searchAccesser, async (req, res) => {
   try {
     const { id } = req.params
     const { title } = req.body
@@ -76,7 +76,7 @@ router.put('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => 
   }
 })
 
-router.delete('/:id', auth, permit('teacher'), searchAccesser, async (req, res) => {
+router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
     const { id } = req.params
     const { course } = req.query

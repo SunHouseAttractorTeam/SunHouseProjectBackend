@@ -36,11 +36,6 @@ const TestSchema = new Schema({
     ref: 'Module',
     required: true,
   },
-  count: {
-    type: Number,
-    min: 0,
-    default: 3,
-  },
   random: {
     type: Boolean,
     default: false,

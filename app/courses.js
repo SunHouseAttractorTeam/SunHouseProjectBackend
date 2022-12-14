@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('teacher'), async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { title, description, category, price } = req.body
 
@@ -65,7 +65,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add', auth, permit('teacher'), async (req, res) => {
+router.put('/add', auth, async (req, res) => {
   let user = null
   const userId = req.query.user
   const ownerId = req.query.owner
@@ -103,7 +103,7 @@ router.put('/add', auth, permit('teacher'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('teacher'), async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   const { title, description, category, price, image } = req.body
   if (!title || !category) {
     return res.status(401).send({ message: 'Data not valid!' })

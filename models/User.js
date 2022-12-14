@@ -30,11 +30,6 @@ const Tests = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Test',
   },
-  count: {
-    type: Number,
-    default: 0,
-    required: true,
-  },
   status: {
     type: Boolean,
     default: false,
@@ -93,7 +88,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     default: 'user',
-    enum: ['user', 'teacher', 'admin', 'moderator'],
+    enum: ['user', 'admin'],
   },
   avatar: {
     type: String,

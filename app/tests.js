@@ -34,7 +34,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
+router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
@@ -94,7 +94,7 @@ router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
+router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.courses
@@ -176,7 +176,7 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
+router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.course
