@@ -450,7 +450,7 @@ router.post('/forgot', async (req, res) => {
   return res.send({ message: `На почту ${user.email} было отправлено письмо с восстановлением пароля` })
 })
 
-router.post('/reset/:resetPasswordToken', async (req, res) => {
+router.post('/reset/:hash', async (req, res) => {
   const user = await User.findOne({ resetPasswordToken: req.params.hash })
 
   user.password = req.body.newPassword
@@ -459,7 +459,7 @@ router.post('/reset/:resetPasswordToken', async (req, res) => {
 
   await user.save({ validateBeforeSave: false })
 
-  nodemailer.resetPassword(user.username, user.email)
+  nodemailer.resetPassword(user.email)
 
   return res.send({ message: 'Ваш пароль успешно изменен' })
 })
