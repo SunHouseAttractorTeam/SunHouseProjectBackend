@@ -59,6 +59,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       correct,
       count,
       data,
+      module: moduleId,
       file: null,
     }
 

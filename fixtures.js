@@ -18,11 +18,9 @@ const run = async () => {
 
   const collections = await mongoose.connection.db.listCollections().toArray()
 
-  // eslint-disable-next-line no-restricted-syntax
-  for (const coll of collections) {
-    // eslint-disable-next-line no-await-in-loop
-    await mongoose.connection.db.dropCollection(coll.name)
-  }
+  await collections.forEach(coll => {
+    mongoose.connection.db.dropCollection(coll.name)
+  })
 
   const [admin, user, teacher, tom] = await User.create(
     {

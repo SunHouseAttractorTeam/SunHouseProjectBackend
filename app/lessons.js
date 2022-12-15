@@ -3,7 +3,6 @@ const auth = require('../middleweare/auth')
 const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
 const Course = require('../models/Course')
-const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
 const upload = require('../middleweare/upload')
 
@@ -73,30 +72,32 @@ router.post('/', auth, searchAccesser, async (req, res) => {
   }
 })
 
-router.put('/:id', auth, upload.array('audio'), searchAccesser, async (req, res) => {
-  // const courseId = req.query.course
-
+router.put('/:id', auth, upload.any(), searchAccesser, async (req, res) => {
   try {
     const files = [...req.files]
-    console.log(files)
-    const allData = [...JSON.parse(req.body.payload)]
-    const allData2 = allData.map(item => {
+
+    const parsedData = [...JSON.parse(req.body.payload)]
+    const data = parsedData.map(item => {
       const keyName = Object.keys(item)[0]
       if (files.length) {
         if (keyName === files[0].fieldname) {
-          item.audio = files[0].filename
+          item[keyName] = files[0].filename
           files.splice(0, 1)
         }
       }
 
       return item
     })
-    console.dir(allData2, { depth: null, maxArrayLength: null })
 
-    const { title } = req.body
-    // const course = await Course.findById(courseId)
-    //
-    // if (!course) return res.status(404).send({ message: 'There are no such course' })
+    const index = data.length - 1
+    const lastFile = data[index]
+
+    let isFile
+    if (Object.keys(lastFile)[0] === 'file') {
+      const { file } = data.splice(index, 1)[0]
+      isFile = file
+    }
+    const { title } = data.splice(0, 1)[0]
 
     if (!title) {
       return res.status(400).send({
@@ -106,16 +107,25 @@ router.put('/:id', auth, upload.array('audio'), searchAccesser, async (req, res)
 
     const lessonData = {
       title,
-      data: req.body.data,
+      data,
+      file: isFile,
     }
-
+    console.log(lessonData)
     const lesson = await Lesson.findById(req.params.id)
 
     if (!lesson) {
       return res.status(404).send({ message: 'Lesson not found!' })
     }
 
-    const updateLesson = await Lesson.findByIdAndUpdate(req.params.id, lessonData, { new: true })
+    const updateLesson = await Lesson.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        data,
+        file: isFile,
+      },
+      { new: true },
+    )
 
     if (lesson.title !== updateLesson.title) {
       const module = await Module.findOne({ _id: lesson.module })

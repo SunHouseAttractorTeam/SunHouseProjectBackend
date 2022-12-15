@@ -52,6 +52,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
     const taskData = {
       title,
       description,
+      module: moduleId,
     }
 
     if (req.file) {
