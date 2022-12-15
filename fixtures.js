@@ -8,7 +8,7 @@ const Category = require('./models/Category')
 const Course = require('./models/Course')
 const Module = require('./models/Module')
 const Notification = require('./models/Notification')
-const Reviews = require('./models/Reviews')
+const Review = require('./models/Review')
 const Task = require('./models/Task')
 const Test = require('./models/Test')
 const Lesson = require('./models/Lesson')
@@ -286,7 +286,7 @@ const run = async () => {
   await user.updateOne({ $push: { tests: { test: test5 } } })
   await user.updateOne({ $push: { tests: { test: test2 } } })
 
-  await Reviews.create(
+  await Review.create(
     {
       user: user._id,
       text: 'lorem ipsum text',
