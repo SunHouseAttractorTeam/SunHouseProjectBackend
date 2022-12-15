@@ -1,10 +1,12 @@
 const express = require('express')
 
+const { _logFunc } = require('nodemailer/lib/shared')
 const Test = require('../models/Test')
 const Module = require('../models/Module')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
+const User = require('../models/User')
 
 const router = express.Router()
 
@@ -172,6 +174,68 @@ router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
 
     return res.send(updateTest)
   } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const testId = req.params.id
+
+    const test = await Test.findById(testId)
+
+    if (!test) return res.status(404).send({ message: 'Test not found' })
+
+    const answeredQuest = req.body.test
+    const { user } = req
+
+    if (answeredQuest && answeredQuest.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const userQuestion of answeredQuest) {
+        // eslint-disable-next-line no-await-in-loop
+        const obj = await Test.findOne({ _id: testId }, { questions: { $elemMatch: { _id: userQuestion.question } } })
+        const { answers } = obj.questions[0]
+        let answer
+        answers.forEach(answerObj => {
+          if (answerObj._id.equals(userQuestion.answer)) {
+            answer = answerObj.status
+          }
+        })
+        const savingUserAnswers = async () => {
+          user.tests = await Promise.all(
+            user.tests.map(testObj => {
+              if (testObj.test.equals(testId)) {
+                return testObj.answers.push({ question: userQuestion.question, status: answer })
+              }
+              return testObj
+            }),
+          )
+          await user.save({ validateBeforeSave: false })
+        }
+
+        if (answer === true) {
+          // eslint-disable-next-line no-await-in-loop
+          await savingUserAnswers()
+        } else if (answer === false) {
+          // eslint-disable-next-line no-await-in-loop
+          await savingUserAnswers()
+        }
+      }
+    }
+
+    user.tests = await Promise.all(
+      user.tests.map(testObj => {
+        // eslint-disable-next-line no-return-assign
+        if (testObj.test.equals(testId)) return (testObj.condition = true)
+        return testObj
+      }),
+    )
+
+    await user.save({ validateBeforeSave: false })
+
+    return res.send(user)
+  } catch (e) {
+    console.log(e)
     return res.sendStatus(500)
   }
 })

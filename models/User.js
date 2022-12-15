@@ -34,6 +34,11 @@ const Tests = new Schema({
     type: Boolean,
     default: false,
   },
+  answers: [],
+  condition: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const Lessons = new Schema({
@@ -105,6 +110,7 @@ const UserSchema = new Schema({
   tests: [Tests],
   lessons: [Lessons],
   tasks: [Tasks],
+  notifications: [{ type: Schema.Types.ObjectId, ref: 'Notification', visibility: { type: Boolean, default: false } }],
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 })

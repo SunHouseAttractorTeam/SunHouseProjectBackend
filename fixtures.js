@@ -18,9 +18,11 @@ const run = async () => {
 
   const collections = await mongoose.connection.db.listCollections().toArray()
 
-  collections.forEach(coll => {
-    mongoose.connection.db.dropCollection(coll.name)
-  })
+  // eslint-disable-next-line no-restricted-syntax
+  for (const coll of collections) {
+    // eslint-disable-next-line no-await-in-loop
+    await mongoose.connection.db.dropCollection(coll.name)
+  }
 
   const [admin, user, teacher, tom] = await User.create(
     {
@@ -31,6 +33,7 @@ const run = async () => {
       role: 'admin',
       avatar: 'fixtures/admin.png',
       authentication: true,
+      confirmationCode: 'dwadaw',
     },
     {
       username: 'User',
@@ -40,15 +43,17 @@ const run = async () => {
       role: 'user',
       avatar: 'fixtures/user.jpg',
       authentication: true,
+      confirmationCode: 'ddawd',
     },
     {
       username: 'Teacher',
       email: 'teacher@gmail.com',
       password: 'teacher',
       token: nanoid(),
-      role: 'teacher',
+      role: 'user',
       avatar: 'fixtures/teacher.jpg',
       authentication: true,
+      confirmationCode: 'dwadwadwa',
     },
     {
       username: 'Tom',
@@ -58,6 +63,7 @@ const run = async () => {
       role: 'user',
       avatar: 'fixtures/tom.jpg',
       authentication: true,
+      confirmationCode: 'dwadawd33a',
     },
   )
 
@@ -229,6 +235,14 @@ const run = async () => {
           title: 'это какой тест?',
           answers: [{ title: '1' }, { title: '2', status: true }, { title: '3' }],
         },
+        {
+          title: 'это какой день?',
+          answers: [{ title: '1' }, { title: '4', status: true }, { title: '3' }],
+        },
+        {
+          title: 'это какой год?',
+          answers: [{ title: '1' }, { title: '2', status: true }, { title: '3' }],
+        },
       ],
     },
     {
@@ -271,6 +285,8 @@ const run = async () => {
   await module2.updateOne({ $push: { data: test3 } })
   await module2.updateOne({ $push: { data: test4 } })
   await module3.updateOne({ $push: { data: test5 } })
+  await user.updateOne({ $push: { tests: { test: test5 } } })
+  await user.updateOne({ $push: { tests: { test: test2 } } })
 
   await Reviews.create(
     {
