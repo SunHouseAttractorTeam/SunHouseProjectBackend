@@ -1,7 +1,14 @@
 const Course = require('../models/Course')
+const Module = require('../models/Module')
 
 const searchAccesser = async (req, res, next) => {
-  const course = await Course.findById(req.query.course)
+  let course
+  if (req.query.module) {
+    const module = await Module.findById(req.query.module)
+    course = await Course.findById(module.course)
+  } else {
+    course = await Course.findById(req.query.course)
+  }
 
   if (!course) return res.status(400).send({ error: 'Course not found!' })
 

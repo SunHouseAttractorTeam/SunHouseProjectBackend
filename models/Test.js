@@ -24,9 +24,6 @@ const TestSchema = new Schema({
     type: String,
     required: true,
   },
-  description: {
-    type: String,
-  },
   type: {
     type: String,
     default: 'test',
@@ -47,8 +44,7 @@ const TestSchema = new Schema({
   },
   questions: [QuestionSchema],
   file: String,
-  video: String,
-  audio: String,
+  data: [],
 })
 
 const Test = mongoose.model('Test', TestSchema)

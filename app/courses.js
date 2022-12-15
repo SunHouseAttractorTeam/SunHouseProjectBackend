@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
     const course = await Course.findById(req.params.id).populate('modules')
 
     if (!course) {
-      res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Course not found!' })
     }
 
     return res.send(course)
