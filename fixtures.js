@@ -18,9 +18,11 @@ const run = async () => {
 
   const collections = await mongoose.connection.db.listCollections().toArray()
 
-  await collections.forEach(coll => {
-    mongoose.connection.db.dropCollection(coll.name)
-  })
+  // eslint-disable-next-line no-restricted-syntax
+  for (const coll of collections) {
+    // eslint-disable-next-line no-await-in-loop
+    await mongoose.connection.db.dropCollection(coll.name)
+  }
 
   const [admin, user, teacher, tom] = await User.create(
     {
@@ -300,6 +302,7 @@ const run = async () => {
     {
       user: user._id,
       text: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry',
+      socialNetwork: 'instagram',
     },
     {
       user: admin._id,
