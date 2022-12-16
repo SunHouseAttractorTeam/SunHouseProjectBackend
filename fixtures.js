@@ -290,10 +290,12 @@ const run = async () => {
     {
       user: user._id,
       text: 'lorem ipsum text',
+      socialNetwork: 'instagram',
     },
     {
       user: admin._id,
       text: 'lorem',
+      socialNetwork: 'instagram',
     },
     {
       user: user._id,
@@ -302,14 +304,17 @@ const run = async () => {
     {
       user: admin._id,
       text: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
+      socialNetwork: 'instagram',
     },
     {
       user: teacher._id,
       text: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry',
+      socialNetwork: 'instagram',
     },
     {
       user: tom._id,
       text: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
+      socialNetwork: 'instagram',
     },
   )
 
