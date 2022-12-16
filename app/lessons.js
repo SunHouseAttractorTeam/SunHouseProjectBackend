@@ -60,7 +60,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
     await lesson.save()
 
     module.data.push({
-      id: lesson._id,
+      _id: lesson._id,
       type: lesson.type,
       title: lesson.title,
     })
@@ -105,12 +105,6 @@ router.put('/:id', auth, upload.any(), searchAccesser, async (req, res) => {
       })
     }
 
-    const lessonData = {
-      title,
-      data,
-      file: isFile,
-    }
-    console.log(lessonData)
     const lesson = await Lesson.findById(req.params.id)
 
     if (!lesson) {
@@ -135,14 +129,14 @@ router.put('/:id', auth, upload.any(), searchAccesser, async (req, res) => {
       }
 
       const itemToData = {
-        id: updateLesson._id,
+        _id: updateLesson._id,
         type: updateLesson.type,
         title: updateLesson.title,
       }
 
       module.data = await Promise.all(
         module.data.map(item => {
-          if (updateLesson._id.toString() === item.id.toString()) return itemToData
+          if (updateLesson._id.toString() === item._id.toString()) return itemToData
           return item
         }),
       )
@@ -177,7 +171,7 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item.id !== lesson._id)
+      module.data = module.data.filter(item => item._id !== lesson._id)
       await module.save()
 
       return res.send('Success')

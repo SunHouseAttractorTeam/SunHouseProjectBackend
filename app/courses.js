@@ -4,7 +4,6 @@ const dayjs = require('dayjs')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
-const permit = require('../middleweare/permit')
 const User = require('../models/User')
 
 const router = express.Router()
@@ -123,7 +122,7 @@ router.put('/:id', auth, async (req, res) => {
     if (!course) {
       return res.status(404).send({ message: 'Course not found!' })
     }
-    const updateCourse = await Course.findOneAndUpdate(req.params.id, courseData)
+    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData)
     return res.send(updateCourse)
   } catch (e) {
     return res.sendStatus(500)

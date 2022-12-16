@@ -1,9 +1,9 @@
 const express = require('express')
 const auth = require('../middleweare/auth')
 const Task = require('../models/Task')
-const permit = require('../middleweare/permit')
 const Module = require('../models/Module')
-const Course = require('../models/Course')
+const upload = require('../middleweare/upload')
+const searchAccesser = require('../middleweare/searchAccesser')
 
 const router = express.Router()
 
@@ -34,16 +34,16 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('admin', 'user'), async (req, res) => {
+router.post('/', auth, searchAccesser, async (req, res) => {
   const moduleId = req.query.module
 
   try {
-    const { title, description } = req.body
+    const { title } = req.body
     const module = await Module.findById(moduleId)
 
     if (!module) return res.status(401).send({ message: 'Module not found' })
 
-    if (!title || !description) {
+    if (!title) {
       return res.status(400).send({
         message: 'Data not valid',
       })
@@ -51,31 +51,14 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
 
     const taskData = {
       title,
-      description,
       module: moduleId,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          taskData.file = req.file.file
-          break
-        case 'video':
-          taskData.video = req.file.file
-          break
-        case 'audio':
-          taskData.audio = req.file.file
-          break
-        default:
-          return taskData
-      }
     }
 
     const task = new Task(taskData)
     await task.save()
 
     module.data.push({
-      id: task._id,
+      _id: task._id,
       type: task.type,
       title: task.title,
     })
@@ -87,42 +70,37 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
+router.put('/:id', auth, upload.any(), searchAccesser, async (req, res) => {
   try {
-    const course = await Course.findById(req.query.course)
-    const { title, description } = req.body
+    const files = [...req.files]
 
-    if (!course) return res.status(404).send({ message: 'There are no such course!' })
+    const parsedData = [...JSON.parse(req.body.payload)]
+    const data = parsedData.map(item => {
+      const keyName = Object.keys(item)[0]
+      if (files.length) {
+        if (keyName === files[0].fieldname) {
+          item[keyName] = files[0].filename
+          files.splice(0, 1)
+        }
+      }
 
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(401).send({ message: 'Authorization error' })
+      return item
+    })
+
+    const index = data.length - 1
+    const lastFile = data[index]
+
+    let isFile
+    if (Object.keys(lastFile)[0] === 'file') {
+      const { file } = data.splice(index, 1)[0]
+      isFile = file
     }
+    const { title } = data.splice(0, 1)[0]
 
-    if (!title || !description) {
+    if (!title) {
       return res.status(400).send({
         message: 'Data not valid',
       })
-    }
-
-    const taskData = {
-      title,
-      description,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          taskData.file = req.file.file
-          break
-        case 'video':
-          taskData.video = req.file.file
-          break
-        case 'audio':
-          taskData.audio = req.file.file
-          break
-        default:
-          return taskData
-      }
     }
 
     const task = await Task.findById(req.params.id)
@@ -131,7 +109,15 @@ router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
       return res.status(404).send({ message: 'Task not found!' })
     }
 
-    const updateTask = await Task.findByIdAndUpdate(req.params.id, taskData, { new: true })
+    const updateTask = await Task.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        data,
+        file: isFile,
+      },
+      { new: true },
+    )
 
     if (task.title !== updateTask.title) {
       const module = await Module.findOne({ _id: req.query.module })
@@ -139,14 +125,14 @@ router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
       if (!module) return res.status(401).send({ message: 'Module not found' })
 
       const itemToData = {
-        id: updateTask._id,
+        _id: updateTask._id,
         type: updateTask.type,
         title: updateTask.title,
       }
 
       module.data = await Promise.all(
         module.data.map(item => {
-          if (updateTask._id.toString() === item.id.toString()) return itemToData
+          if (updateTask._id.toString() === item._id.toString()) return itemToData
           return item
         }),
       )
@@ -159,15 +145,9 @@ router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
+router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id)
-    const course = await Course.findById(req.query.course)
-
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(401).send('Authoeization error')
-    }
-    if (!module) return res.status(404).send({ message: 'Module not found' })
 
     if (!task) {
       return res.status(404).send({ message: 'Task not found!' })
@@ -182,7 +162,7 @@ router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item.id !== task._id)
+      module.data = module.data.filter(item => item._id !== task._id)
       await module.save()
 
       return res.send({ message: 'Success' })
