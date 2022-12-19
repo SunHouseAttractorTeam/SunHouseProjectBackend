@@ -16,6 +16,10 @@ const ModuleSchema = new Schema({
     required: true,
   },
   data: [],
+  visibility: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 ModuleSchema.pre('deleteOne', async function (next) {

@@ -8,9 +8,6 @@ const TaskSchema = new Schema({
     required: true,
     unique: true,
   },
-  description: {
-    type: String,
-  },
   type: {
     type: String,
     default: 'task',
@@ -21,8 +18,7 @@ const TaskSchema = new Schema({
     required: true,
   },
   file: String,
-  video: String,
-  audio: String,
+  data: [],
 })
 
 const Task = mongoose.model('Task', TaskSchema)

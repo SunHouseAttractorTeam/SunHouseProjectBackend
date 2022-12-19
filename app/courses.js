@@ -4,7 +4,6 @@ const dayjs = require('dayjs')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
-const permit = require('../middleweare/permit')
 const User = require('../models/User')
 
 const router = express.Router()
@@ -28,7 +27,7 @@ router.get('/:id', async (req, res) => {
     const course = await Course.findById(req.params.id).populate('modules')
 
     if (!course) {
-      res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Course not found!' })
     }
 
     return res.send(course)
@@ -37,7 +36,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('teacher'), async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { title, description, category, price } = req.body
 
@@ -65,7 +64,7 @@ router.post('/', auth, permit('teacher'), async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add', auth, permit('teacher'), async (req, res) => {
+router.put('/add', auth, async (req, res) => {
   let user = null
   const userId = req.query.user
   const ownerId = req.query.owner
@@ -103,7 +102,7 @@ router.put('/add', auth, permit('teacher'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('teacher'), async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   const { title, description, category, price, image } = req.body
   if (!title || !category) {
     return res.status(401).send({ message: 'Data not valid!' })
@@ -123,7 +122,7 @@ router.put('/:id', auth, permit('teacher'), async (req, res) => {
     if (!course) {
       return res.status(404).send({ message: 'Course not found!' })
     }
-    const updateCourse = await Course.findOneAndUpdate(req.params.id, courseData)
+    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData)
     return res.send(updateCourse)
   } catch (e) {
     return res.sendStatus(500)

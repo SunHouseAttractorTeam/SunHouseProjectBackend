@@ -5,8 +5,6 @@ const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
 const validator = require('email-validator')
 const crypto = require('crypto')
-const e = require('express')
-const { hash } = require('bcrypt')
 const User = require('../models/User')
 const config = require('../config')
 const nodemailer = require('./nodemailer')
@@ -14,7 +12,6 @@ const nodemailer = require('./nodemailer')
 const client = new OAuth2Client()
 const router = express.Router()
 const utils = require('../middleweare/token')
-const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
 const Course = require('../models/Course')
 const Test = require('../models/Test')
@@ -33,11 +30,16 @@ const getLiveSecretCookie = user => {
   return { token: utils.getToken(username, maxAge), maxAge }
 }
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find()
+    const query = {}
+
+    if (req.query.email) query.email = req.query.email
+
+    const users = await User.find(query)
+
     return res.send(users)
-  } catch (e) {
+  } catch {
     return res.status(500)
   }
 })
@@ -433,7 +435,7 @@ router.post('/forgot', async (req, res) => {
   const hash = buf.toString('hex')
 
   if (!validator.validate(req.body.email)) {
-    e.email = {
+    express.email = {
       message: 'Email not found',
     }
   }

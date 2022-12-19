@@ -3,7 +3,8 @@ const auth = require('../middleweare/auth')
 const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
 const Course = require('../models/Course')
-const permit = require('../middleweare/permit')
+const searchAccesser = require('../middleweare/searchAccesser')
+const upload = require('../middleweare/upload')
 
 const router = express.Router()
 
@@ -34,11 +35,10 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
+router.post('/', auth, searchAccesser, async (req, res) => {
   const moduleId = req.query.module
-
   try {
-    const { title, description } = req.body
+    const { title } = req.body
     const module = await Module.findById(moduleId)
 
     if (!module) {
@@ -53,30 +53,14 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
 
     const lessonData = {
       title,
-      description,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          lessonData.file = req.file.file
-          break
-        case 'video':
-          lessonData.video = req.file.file
-          break
-        case 'audio':
-          lessonData.audio = req.file.file
-          break
-        default:
-          return lessonData
-      }
+      module: moduleId,
     }
 
     const lesson = new Lesson(lessonData)
     await lesson.save()
 
     module.data.push({
-      id: lesson._id,
+      _id: lesson._id,
       type: lesson.type,
       title: lesson.title,
     })
@@ -88,45 +72,37 @@ router.post('/', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
-  const moduleId = req.query.module
-  const courseId = req.query.course
-
+router.put('/:id', auth, upload.any(), searchAccesser, async (req, res) => {
   try {
-    const { title, description } = req.body
-    const course = await Course.findById(courseId)
+    const files = [...req.files]
 
-    if (!course) return res.status(404).send({ message: 'There are no such course' })
+    const parsedData = [...JSON.parse(req.body.payload)]
+    const data = parsedData.map(item => {
+      const keyName = Object.keys(item)[0]
+      if (files.length) {
+        if (keyName === files[0].fieldname) {
+          item[keyName] = files[0].filename
+          files.splice(0, 1)
+        }
+      }
 
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(401).send({ message: 'Authorization error' })
+      return item
+    })
+
+    const index = data.length - 1
+    const lastFile = data[index]
+
+    let isFile
+    if (Object.keys(lastFile)[0] === 'file') {
+      const { file } = data.splice(index, 1)[0]
+      isFile = file
     }
+    const { title } = data.splice(0, 1)[0]
 
     if (!title) {
       return res.status(400).send({
         message: 'Data not valid',
       })
-    }
-
-    const lessonData = {
-      title,
-      description,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          lessonData.file = req.file.file
-          break
-        case 'video':
-          lessonData.video = req.file.file
-          break
-        case 'audio':
-          lessonData.audio = req.file.file
-          break
-        default:
-          return lessonData
-      }
     }
 
     const lesson = await Lesson.findById(req.params.id)
@@ -135,24 +111,32 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
       return res.status(404).send({ message: 'Lesson not found!' })
     }
 
-    const updateLesson = await Lesson.findByIdAndUpdate(req.params.id, lessonData, { new: true })
+    const updateLesson = await Lesson.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        data,
+        file: isFile,
+      },
+      { new: true },
+    )
 
     if (lesson.title !== updateLesson.title) {
-      const module = await Module.findOne({ _id: moduleId })
+      const module = await Module.findOne({ _id: lesson.module })
 
       if (!module) {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
       const itemToData = {
-        id: updateLesson._id,
+        _id: updateLesson._id,
         type: updateLesson.type,
         title: updateLesson.title,
       }
 
       module.data = await Promise.all(
         module.data.map(item => {
-          if (updateLesson._id.toString() === item.id.toString()) return itemToData
+          if (updateLesson._id.toString() === item._id.toString()) return itemToData
           return item
         }),
       )
@@ -165,7 +149,7 @@ router.put('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
+router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.course
@@ -178,10 +162,6 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
 
     if (!course) return res.status(404).send({ message: 'Course not found!' })
 
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(401).send({ message: 'Authorization error' })
-    }
-
     const response = await Lesson.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
@@ -191,7 +171,7 @@ router.delete('/:id', auth, permit('admin', 'teacher'), async (req, res) => {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item.id !== lesson._id)
+      module.data = module.data.filter(item => item._id !== lesson._id)
       await module.save()
 
       return res.send('Success')

@@ -7,9 +7,6 @@ const LessonSchema = new Schema({
     type: String,
     required: true,
   },
-  description: {
-    type: String,
-  },
   type: {
     type: String,
     default: 'lesson',
@@ -20,8 +17,7 @@ const LessonSchema = new Schema({
     required: true,
   },
   file: String,
-  video: String,
-  audio: String,
+  data: [],
 })
 
 const Lesson = mongoose.model('Lesson', LessonSchema)

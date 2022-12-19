@@ -24,9 +24,6 @@ const TestSchema = new Schema({
     type: String,
     required: true,
   },
-  description: {
-    type: String,
-  },
   type: {
     type: String,
     default: 'test',
@@ -35,11 +32,6 @@ const TestSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Module',
     required: true,
-  },
-  count: {
-    type: Number,
-    min: 0,
-    default: 3,
   },
   random: {
     type: Boolean,
@@ -52,8 +44,7 @@ const TestSchema = new Schema({
   },
   questions: [QuestionSchema],
   file: String,
-  video: String,
-  audio: String,
+  data: [],
 })
 
 const Test = mongoose.model('Test', TestSchema)
