@@ -5,8 +5,6 @@ const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
 const validator = require('email-validator')
 const crypto = require('crypto')
-const e = require('express')
-const bcrypt = require('bcrypt')
 const User = require('../models/User')
 const config = require('../config')
 const nodemailer = require('./nodemailer')
@@ -14,14 +12,11 @@ const nodemailer = require('./nodemailer')
 const client = new OAuth2Client()
 const router = express.Router()
 const utils = require('../middleweare/token')
-const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
 const Course = require('../models/Course')
 const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
-
-const SALT_WORK_FACTOR = 10
 
 const getLiveCookie = user => {
   const { username } = user
@@ -35,11 +30,16 @@ const getLiveSecretCookie = user => {
   return { token: utils.getToken(username, maxAge), maxAge }
 }
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find()
+    const query = {}
+
+    if (req.query.email) query.email = req.query.email
+
+    const users = await User.find(query)
+
     return res.send(users)
-  } catch (e) {
+  } catch {
     return res.status(500)
   }
 })
@@ -435,7 +435,7 @@ router.post('/forgot', async (req, res) => {
 
   const hash = buf.toString('hex')
   if (!validator.validate(req.body.email)) {
-    e.email = {
+    express.email = {
       message: 'Email not found',
     }
   }
@@ -446,7 +446,6 @@ router.post('/forgot', async (req, res) => {
   user.resetPasswordToken = hash
   user.resetPasswordExpires = Date.now() + 360000
   await user.save({ validateBeforeSave: false })
-  console.log(user)
 
   nodemailer.sendForgotPassword(user.email, user.resetPasswordToken)
 

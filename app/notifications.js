@@ -81,7 +81,7 @@ router.put('/:id', auth, permit('admin'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('admin', 'teacher', 'user'), async (req, res) => {
+router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id)
 

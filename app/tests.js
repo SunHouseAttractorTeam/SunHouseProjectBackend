@@ -1,10 +1,12 @@
 const express = require('express')
 
+const { _logFunc } = require('nodemailer/lib/shared')
 const Test = require('../models/Test')
 const Module = require('../models/Module')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
+const User = require('../models/User')
 
 const router = express.Router()
 
@@ -34,7 +36,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
+router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
@@ -44,7 +46,7 @@ router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
       return res.status(404).send({ message: 'There are no such module!' })
     }
 
-    const { title, description, random, correct, count, questions } = req.body
+    const { title, data, random, correct, count, questions } = req.body
 
     if (!title) {
       return res.status(401).send({ message: 'Data not valid' })
@@ -52,14 +54,13 @@ router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
 
     const testData = {
       title,
-      description,
       questions,
       random,
       correct,
       count,
+      data,
+      module: moduleId,
       file: null,
-      video: null,
-      audio: null,
     }
 
     if (req.file) {
@@ -94,7 +95,7 @@ router.post('/', auth, permit('teacher', 'admin'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
+router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.courses
@@ -176,7 +177,69 @@ router.put('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, permit('teacher', 'admin'), async (req, res) => {
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const testId = req.params.id
+
+    const test = await Test.findById(testId)
+
+    if (!test) return res.status(404).send({ message: 'Test not found' })
+
+    const answeredQuest = req.body.test
+    const { user } = req
+
+    if (answeredQuest && answeredQuest.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const userQuestion of answeredQuest) {
+        // eslint-disable-next-line no-await-in-loop
+        const obj = await Test.findOne({ _id: testId }, { questions: { $elemMatch: { _id: userQuestion.question } } })
+        const { answers } = obj.questions[0]
+        let answer
+        answers.forEach(answerObj => {
+          if (answerObj._id.equals(userQuestion.answer)) {
+            answer = answerObj.status
+          }
+        })
+        const savingUserAnswers = async () => {
+          user.tests = await Promise.all(
+            user.tests.map(testObj => {
+              if (testObj.test.equals(testId)) {
+                return testObj.answers.push({ question: userQuestion.question, status: answer })
+              }
+              return testObj
+            }),
+          )
+          await user.save({ validateBeforeSave: false })
+        }
+
+        if (answer === true) {
+          // eslint-disable-next-line no-await-in-loop
+          await savingUserAnswers()
+        } else if (answer === false) {
+          // eslint-disable-next-line no-await-in-loop
+          await savingUserAnswers()
+        }
+      }
+    }
+
+    user.tests = await Promise.all(
+      user.tests.map(testObj => {
+        // eslint-disable-next-line no-return-assign
+        if (testObj.test.equals(testId)) return (testObj.condition = true)
+        return testObj
+      }),
+    )
+
+    await user.save({ validateBeforeSave: false })
+
+    return res.send(user)
+  } catch (e) {
+    console.log(e)
+    return res.sendStatus(500)
+  }
+})
+
+router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.course

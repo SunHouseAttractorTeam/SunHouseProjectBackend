@@ -30,12 +30,12 @@ const Tests = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Test',
   },
-  count: {
-    type: Number,
-    default: 0,
-    required: true,
-  },
   status: {
+    type: Boolean,
+    default: false,
+  },
+  answers: [],
+  condition: {
     type: Boolean,
     default: false,
   },
@@ -97,7 +97,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     default: 'user',
-    enum: ['user', 'teacher', 'admin', 'moderator'],
+    enum: ['user', 'admin'],
   },
   avatar: {
     type: String,
@@ -114,6 +114,7 @@ const UserSchema = new Schema({
   tests: [Tests],
   lessons: [Lessons],
   tasks: [Tasks],
+  notifications: [{ type: Schema.Types.ObjectId, ref: 'Notification', visibility: { type: Boolean, default: false } }],
   resetPasswordToken: {
     type: String,
     default: '',
