@@ -85,6 +85,10 @@ const UserSchema = new Schema({
     type: String,
     required: true,
   },
+  newPassword: {
+    type: String,
+    default: '',
+  },
   facebookId: String,
   vkId: String,
   appleId: String,
@@ -110,7 +114,10 @@ const UserSchema = new Schema({
   tests: [Tests],
   lessons: [Lessons],
   tasks: [Tasks],
-  resetPasswordToken: String,
+  resetPasswordToken: {
+    type: String,
+    default: '',
+  },
   resetPasswordExpires: Date,
 })
 

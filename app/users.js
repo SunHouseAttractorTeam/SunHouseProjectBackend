@@ -6,7 +6,7 @@ const { OAuth2Client } = require('google-auth-library')
 const validator = require('email-validator')
 const crypto = require('crypto')
 const e = require('express')
-const { hash } = require('bcrypt')
+const bcrypt = require('bcrypt')
 const User = require('../models/User')
 const config = require('../config')
 const nodemailer = require('./nodemailer')
@@ -20,6 +20,8 @@ const Course = require('../models/Course')
 const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
+
+const SALT_WORK_FACTOR = 10
 
 const getLiveCookie = user => {
   const { username } = user
@@ -430,8 +432,8 @@ router.delete('/sessions', async (req, res) => {
 
 router.post('/forgot', async (req, res) => {
   const buf = crypto.randomBytes(20)
-  const hash = buf.toString('hex')
 
+  const hash = buf.toString('hex')
   if (!validator.validate(req.body.email)) {
     e.email = {
       message: 'Email not found',
@@ -444,24 +446,34 @@ router.post('/forgot', async (req, res) => {
   user.resetPasswordToken = hash
   user.resetPasswordExpires = Date.now() + 360000
   await user.save({ validateBeforeSave: false })
+  console.log(user)
 
   nodemailer.sendForgotPassword(user.email, user.resetPasswordToken)
 
   return res.send({ message: `На почту ${user.email} было отправлено письмо с восстановлением пароля` })
 })
 
-router.post('/reset/:hash', async (req, res) => {
-  const user = await User.findOne({ resetPasswordToken: req.params.hash })
+router.post('/reset', async (req, res) => {
+  try {
+    console.log(req.body)
+    const user = await User.findOne({ resetPasswordToken: req.body.hash.hash })
 
-  user.password = req.body.newPassword
-  user.resetPasswordToken = undefined
-  user.resetPasswordExpires = undefined
+    console.log(user)
 
-  await user.save({ validateBeforeSave: false })
+    user.resetPasswordToken = ''
+    user.resetPasswordExpires = Date.now() + 360000
 
-  nodemailer.resetPassword(user.email)
+    console.log(req.body.hash.newPassword)
+    user.password = req.body.hash.newPassword
 
-  return res.send({ message: 'Ваш пароль успешно изменен' })
+    await user.save({ validateBeforeSave: false })
+
+    nodemailer.resetPassword(user.email)
+
+    return res.send({ message: 'Ваш пароль успешно изменен' })
+  } catch (e) {
+    console.log(e)
+  }
 })
 
 module.exports = router
