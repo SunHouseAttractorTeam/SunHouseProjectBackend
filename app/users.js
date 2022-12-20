@@ -431,33 +431,35 @@ router.delete('/sessions', async (req, res) => {
 })
 
 router.post('/forgot', async (req, res) => {
-  const buf = crypto.randomBytes(20)
+  try {
+    const buf = crypto.randomBytes(20)
 
-  const hash = buf.toString('hex')
-  if (!validator.validate(req.body.email)) {
-    express.email = {
-      message: 'Email not found',
+    const hash = buf.toString('hex')
+    if (!validator.validate(req.body.email)) {
+      express.email = {
+        message: 'Email not found',
+      }
     }
+
+    const user = await User.findOne({ email: req.body.email })
+    if (!user) return res.status(404).send({ error: 'User not found' })
+
+    user.resetPasswordToken = hash
+    user.resetPasswordExpires = Date.now() + 360000
+    await user.save({ validateBeforeSave: false })
+
+    nodemailer.sendForgotPassword(user.email, user.resetPasswordToken)
+
+    return res.send({ message: `На почту ${user.email} было отправлено письмо с восстановлением пароля` })
+  } catch (e) {
+    return res.status(500)
   }
-
-  const user = await User.findOne({ email: req.body.email })
-  if (!user) return res.status(404).send({ error: 'User not found' })
-
-  user.resetPasswordToken = hash
-  user.resetPasswordExpires = Date.now() + 360000
-  await user.save({ validateBeforeSave: false })
-
-  nodemailer.sendForgotPassword(user.email, user.resetPasswordToken)
-
-  return res.send({ message: `На почту ${user.email} было отправлено письмо с восстановлением пароля` })
 })
 
 router.post('/reset', async (req, res) => {
   try {
     console.log(req.body)
     const user = await User.findOne({ resetPasswordToken: req.body.hash.hash })
-
-    console.log(user)
 
     user.resetPasswordToken = ''
     user.resetPasswordExpires = Date.now() + 360000
@@ -467,11 +469,11 @@ router.post('/reset', async (req, res) => {
 
     await user.save({ validateBeforeSave: false })
 
-    nodemailer.resetPassword(user.email)
+    nodemailer.resetPassword(user.email, user.name)
 
     return res.send({ message: 'Ваш пароль успешно изменен' })
   } catch (e) {
-    console.log(e)
+    return res.status(500)
   }
 })
 
