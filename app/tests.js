@@ -1,12 +1,12 @@
 const express = require('express')
 
-const { _logFunc } = require('nodemailer/lib/shared')
 const Test = require('../models/Test')
 const Module = require('../models/Module')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
-const User = require('../models/User')
+const searchAccesser = require('../middleweare/searchAccesser')
+const upload = require('../middleweare/upload')
 
 const router = express.Router()
 
@@ -63,27 +63,11 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       file: null,
     }
 
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          testData.file = req.file.file
-          break
-        case 'video':
-          testData.video = req.file.file
-          break
-        case 'audio':
-          testData.audio = req.file.file
-          break
-        default:
-          return testData
-      }
-    }
-
     const test = new Test(testData)
     await test.save()
 
     module.data.push({
-      id: test._id,
+      _id: test._id,
       type: test.type,
       title: test.title,
     })
@@ -95,75 +79,73 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
+router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
   try {
-    const moduleId = req.query.module
-    const courseId = req.query.courses
+    const files = [...req.files]
 
-    const course = await Course.findById(courseId)
-    const { title, description, questions, random, correct, count } = req.body
-
-    if (!course) return res.status(404).send({ message: 'There are no such course' })
-
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(404).send({ message: 'Authorization error!' })
-    }
-
-    if (!title || !description || !questions) {
-      return res.status(401).send({ message: 'Data not valid' })
-    }
-
-    const testData = {
-      title,
-      description,
-      questions,
-      random,
-      correct,
-      count,
-      file: null,
-      video: null,
-      audio: null,
-    }
-
-    if (req.file) {
-      switch (req.file.type) {
-        case 'file':
-          testData.file = req.file.file
-          break
-        case 'video':
-          testData.video = req.file.file
-          break
-        case 'audio':
-          testData.audio = req.file.file
-          break
-        default:
-          return testData
+    const parsedData = [...JSON.parse(req.body.payload)]
+    const data = parsedData.map(item => {
+      const keyName = Object.keys(item)[0]
+      if (files.length) {
+        if (keyName === files[0].fieldname) {
+          item[keyName] = files[0].filename
+          files.splice(0, 1)
+        }
       }
+
+      return item
+    })
+
+    const index = data.length - 1
+    const lastFile = data[index]
+
+    let isFile
+    if (Object.keys(lastFile)[0] === 'file') {
+      const { file } = data.splice(index, 1)[0]
+      isFile = file
+    }
+    const { title } = data.splice(0, 1)[0]
+
+    if (!title) {
+      return res.status(400).send({
+        message: 'Data not valid',
+      })
+    }
+
+    if (!title) {
+      return res.status(401).send({ message: 'Data not valid' })
     }
 
     const test = await Test.findById(req.params.id)
 
     if (!test) return res.status(404).send({ message: 'Test not found' })
 
-    const updateTest = await Test.findByIdAndUpdate(req.params.id, testData)
-    await updateTest.save()
+    const updateTest = await Test.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        data,
+        file: isFile,
+      },
+      { new: test },
+    )
 
     if (test.title !== updateTest.title) {
-      const module = await Module.findOne({ _id: moduleId })
+      const module = await Module.findOne({ _id: test.module })
 
       if (!module) {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
       const itemToData = {
-        id: updateTest._id,
+        _id: updateTest._id,
         type: updateTest.type,
         title: updateTest.title,
       }
 
       module.data = await Promise.all(
         module.data.map(item => {
-          if (updateTest._id.toString() === item.id.toString()) return itemToData
+          if (updateTest._id.toString() === item._id.toString()) return itemToData
           return item
         }),
       )
@@ -173,6 +155,7 @@ router.put('/:id', auth, permit('admin', 'user'), async (req, res) => {
 
     return res.send(updateTest)
   } catch (e) {
+    console.log(e)
     return res.sendStatus(500)
   }
 })
@@ -234,12 +217,11 @@ router.patch('/:id', auth, async (req, res) => {
 
     return res.send(user)
   } catch (e) {
-    console.log(e)
     return res.sendStatus(500)
   }
 })
 
-router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
+router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
     const moduleId = req.query.module
     const courseId = req.query.course
@@ -265,7 +247,7 @@ router.delete('/:id', auth, permit('admin', 'user'), async (req, res) => {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item.id !== test._id)
+      module.data = module.data.filter(item => item._id !== test._id)
       await module.save()
 
       return res.send('Success')

@@ -70,7 +70,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
   }
 })
 
-router.put('/:id', auth, upload.any(), searchAccesser, async (req, res) => {
+router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
   try {
     const files = [...req.files]
 
