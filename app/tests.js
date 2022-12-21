@@ -79,6 +79,22 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   }
 })
 
+router.put('/:id/questions', auth, searchAccesser, async (req, res) => {
+  try {
+    const questions = req.body
+
+    const test = await Test.findById(req.params.id)
+
+    if (!test) return res.status(404).send({ message: 'Test not found' })
+
+    const updateTest = await Test.findByIdAndUpdate(req.params.id, { questions }, { new: true })
+
+    return res.send(updateTest)
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
 router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
   try {
     const files = [...req.files]
