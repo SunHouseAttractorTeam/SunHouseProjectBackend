@@ -331,11 +331,13 @@ const run = async () => {
       type: 'info',
       description: 'У вас появилось 2 курса!',
       user: teacher._id,
+      view: true,
     },
     {
       type: 'info',
       description: 'У вас появился 1 ученик!',
       user: teacher._id,
+      view: true,
     },
     {
       type: 'info',

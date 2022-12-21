@@ -7,6 +7,9 @@ const router = express.Router()
 
 router.get('/', auth, async (req, res) => {
   try {
+    const query = {}
+
+    if (req.query.user && !req.query.user) query.user = req.query.user
     const notification = await Notification.find()
     return res.send(notification)
   } catch (e) {
