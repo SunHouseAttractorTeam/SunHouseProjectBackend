@@ -8,7 +8,7 @@ const Category = require('./models/Category')
 const Course = require('./models/Course')
 const Module = require('./models/Module')
 const Notification = require('./models/Notification')
-const Review = require('./models/Review')
+const Review = require('./models/LendingReview')
 const Task = require('./models/Task')
 const Test = require('./models/Test')
 const Lesson = require('./models/Lesson')
@@ -290,33 +290,33 @@ const run = async () => {
 
   await Review.create(
     {
-      user: user._id,
-      text: 'lorem ipsum text',
+      name: 'Биба',
+      description: 'lorem ipsum text',
       socialNetwork: 'instagram',
     },
     {
-      user: admin._id,
-      text: 'lorem',
+      name: 'Боба',
+      description: 'lorem',
       socialNetwork: 'instagram',
     },
     {
-      user: user._id,
-      text: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry',
+      name: 'Пупа',
+      description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry',
       socialNetwork: 'instagram',
     },
     {
-      user: admin._id,
-      text: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
+      name: 'Лупа',
+      description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been',
       socialNetwork: 'instagram',
     },
     {
-      user: teacher._id,
-      text: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry',
+      name: 'Пупсень',
+      description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry',
       socialNetwork: 'instagram',
     },
     {
-      user: tom._id,
-      text: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
+      name: 'Вупсень',
+      description: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
       socialNetwork: 'instagram',
     },
   )
