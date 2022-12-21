@@ -171,7 +171,6 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
 
     return res.send(updateTest)
   } catch (e) {
-    console.log(e)
     return res.sendStatus(500)
   }
 })
