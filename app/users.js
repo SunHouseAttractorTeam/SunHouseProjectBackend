@@ -278,21 +278,21 @@ router.put('/add_course', auth, async (req, res) => {
     const lessons = await Lesson.find({ module: { $in: modulesId } })
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const id of tests) {
+    for (const test of tests) {
       // eslint-disable-next-line no-await-in-loop
-      await User.findByIdAndUpdate(userId, { $push: { tests: { id } } })
+      await User.findByIdAndUpdate(userId, { $push: { tests: { test } } })
     }
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const id of tasks) {
+    for (const task of tasks) {
       // eslint-disable-next-line no-await-in-loop
-      await User.findByIdAndUpdate(userId, { $push: { tasks: { id } } })
+      await User.findByIdAndUpdate(userId, { $push: { tasks: { task } } })
     }
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const id of lessons) {
+    for (const lesson of lessons) {
       // eslint-disable-next-line no-await-in-loop
-      await User.findByIdAndUpdate(userId, { $push: { lessons: { id } } })
+      await User.findByIdAndUpdate(userId, { $push: { lessons: { lesson } } })
     }
 
     return res.send({ message: 'Контент успешно добавлен' })
@@ -305,9 +305,9 @@ router.put('/add_course', auth, async (req, res) => {
 router.patch('/:id/update_status', auth, async (req, res) => {
   const userId = req.params.id
   const contentId = req.query.content
-  const { boolean } = req.query
+
   try {
-    const user = await User.findById(userId)
+    const user = await User.findById(req.user._id)
 
     if (!user) {
       return res.status(404).send({ message: 'User not found!' })
@@ -323,9 +323,9 @@ router.patch('/:id/update_status', auth, async (req, res) => {
             _id: userId,
             'myCourses.course': contentId,
           },
-          { $set: { 'myCourses.$.status': boolean } },
+          { $set: { 'myCourses.$.status': true } },
         )
-        return res.send(user)
+        return res.send({ message: 'Студент прошёл' })
       }
       case 'test': {
         const test = await Test.findById(contentId)
@@ -337,9 +337,9 @@ router.patch('/:id/update_status', auth, async (req, res) => {
             _id: userId,
             'tests.test': contentId,
           },
-          { $set: { 'tests.$.status': boolean } },
+          { $set: { 'tests.$.status': true } },
         )
-        return res.send(user)
+        return res.send({ message: 'Студент прошёл' })
       }
       case 'lesson': {
         const lesson = await Lesson.findById(contentId)
@@ -351,28 +351,34 @@ router.patch('/:id/update_status', auth, async (req, res) => {
             _id: userId,
             'lessons.lesson': contentId,
           },
-          { $set: { 'lessons.$.status': boolean } },
+          { $set: { 'lessons.$.status': true } },
         )
-        return res.send(user)
+        return res.send({ message: 'Студент прошёл' })
       }
       case 'task': {
         const task = await Task.findById(contentId)
         if (!task) {
           return res.status(404).send({ message: 'Task not found!' })
         }
-        if (user.role === 'teacher') {
-          await User.updateOne(
-            {
-              _id: userId,
-              'tasks.task': contentId,
-            },
-            { $set: { 'tasks.$.status': boolean } },
-          )
+
+        const course = await Course.findById(req.query.course)
+        if (!course) return res.status(400).send({ error: 'Course not found!' })
+
+        if (!course.teachers.includes(req.user._id)) {
+          return res.status(403).send({ message: "User don't have permission" })
         }
-        return res.send(user)
+
+        await User.updateOne(
+          {
+            _id: userId,
+            'tasks.task': contentId,
+          },
+          { $set: { 'tasks.$.status': true } },
+        )
+        return res.send({ message: 'Студент прошёл' })
       }
       default:
-        return res.send(user)
+        return res.send({ message: 'Контент не найден!' })
     }
   } catch (e) {
     return res.status(500)
