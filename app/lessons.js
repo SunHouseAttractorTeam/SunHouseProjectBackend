@@ -80,7 +80,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
     const data = parsedData.map(item => {
       const keyName = Object.keys(item)[0]
       if (files.length) {
-        if (keyName === files[0].fieldname) {
+        if (keyName === files[0].fieldname && typeof item[keyName] !== 'string') {
           item[keyName] = files[0].filename
           files.splice(0, 1)
         }
