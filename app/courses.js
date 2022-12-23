@@ -125,7 +125,7 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
 })
 
 router.put('/:id', auth, upload.single('image'), async (req, res) => {
-  const { title, description, category, price, private } = req.body
+  const { title, description, category, private } = req.body
   if (!title || !category) {
     return res.status(401).send({ message: 'Data not valid!' })
   }
@@ -134,7 +134,6 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     description,
     category,
     private,
-    price,
     image: null,
   }
 
