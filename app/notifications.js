@@ -2,16 +2,23 @@ const express = require('express')
 const Notification = require('../models/Notification')
 const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
+const User = require('../models/User')
 
 const router = express.Router()
 
 router.get('/', auth, async (req, res) => {
   try {
     const query = {}
+    if (req.query.user && Boolean(req.query.user)) {
+      const user = await User.findById(req.query.user)
+      if (!user) {
+        return res.status(404).send({ message: 'User not found!' })
+      }
+      query.user = req.query.user
+    }
 
-    if (req.query.user && !req.query.user) query.user = req.query.user
-    const notification = await Notification.find()
-    return res.send(notification)
+    const notifications = await Notification.find(query)
+    return res.send(notifications)
   } catch (e) {
     return res.status(500).send({ error: e.message })
   }
@@ -31,8 +38,34 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, permit('admin'), async (req, res) => {
+router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   try {
+    // рассылка уведомлений
+    if (req.query.params === 'all') {
+      const { description } = req.body
+      if (!description) {
+        return res.status(400).send({
+          message: 'Data not valid',
+        })
+      }
+      const users = await User.find()
+
+      const notifics = [] // использую для проверки  отправленных сообщений
+
+      await Promise.all(
+        users.map(async user => {
+          const notificationData = {
+            description,
+            user,
+          }
+          const notification = new Notification(notificationData)
+          await notification.save()
+          notifics.push(notification)
+        }),
+      )
+      return res.send(notifics)
+    }
+
     const { user, description } = req.body
     if (!user || !description) {
       return res.status(400).send({
@@ -48,6 +81,32 @@ router.post('/', auth, permit('admin'), async (req, res) => {
     const notification = new Notification(notificationData)
     await notification.save()
     return res.send(notification)
+  } catch (e) {
+    return res.status(500).send({ error: e.message })
+  }
+})
+
+router.put('/', auth, permit('admin', 'user'), async (req, res) => {
+  try {
+    const { data } = req.body
+    if (!data) {
+      return res.status(400).send({ message: 'Data not valid' })
+    }
+
+    const notifications = await Promise.all(
+      data.map(async notic => {
+        const notificationData = {
+          ...notic,
+          view: !notic.view,
+        }
+
+        const notification = await Notification.findByIdAndUpdate(notic._id, notificationData)
+        await notification.save()
+        return notificationData
+      }),
+    )
+
+    return res.send(notifications)
   } catch (e) {
     return res.status(500).send({ error: e.message })
   }
