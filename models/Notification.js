@@ -12,6 +12,10 @@ const NotificationSchema = new Schema({
     required: true,
     ref: 'User',
   },
+  view: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const Notification = mongoose.model('Notification', NotificationSchema)
