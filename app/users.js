@@ -10,7 +10,6 @@ const nodemailer = require('./nodemailer')
 const client = new OAuth2Client()
 const router = express.Router()
 const utils = require('../middleweare/token')
-const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
 const Course = require('../models/Course')
 const Test = require('../models/Test')
@@ -40,13 +39,13 @@ router.get('/', async (req, res) => {
 
 router.get('/confirm/:confirmationCode', async (req, res) => {
   try {
-    console.log(req.params.confirmationCode)
     const user = await User.findOne({ confirmationCode: req.params.confirmationCode })
     if (!user) {
       return res.status(404).send({ message: 'User not found' })
     }
     user.authentication = true
     await user.save({ validateBeforeSave: false })
+    console.log(user)
     return res.send({ message: 'Account confirm' })
   } catch (e) {
     return res.status(500).send({ message: e })
