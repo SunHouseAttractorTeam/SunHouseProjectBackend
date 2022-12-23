@@ -4,6 +4,7 @@ const dayjs = require('dayjs')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
+const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
 
@@ -123,8 +124,8 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, async (req, res) => {
-  const { title, description, category, price, image } = req.body
+router.put('/:id', auth, upload.single('image'), async (req, res) => {
+  const { title, description, category, private } = req.body
   if (!title || !category) {
     return res.status(401).send({ message: 'Data not valid!' })
   }
@@ -132,9 +133,12 @@ router.put('/:id', auth, async (req, res) => {
     title,
     description,
     category,
-    user: req.user._id,
-    price,
-    image,
+    private,
+    image: null,
+  }
+
+  if (req.file) {
+    courseData.image = `uploads/${req.file.filename}`
   }
 
   try {
