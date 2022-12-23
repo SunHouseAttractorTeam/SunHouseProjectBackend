@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const User = require('../models/User')
+const permit = require('../middleweare/permit')
 
 const router = express.Router()
 
@@ -99,6 +100,26 @@ router.put('/add', auth, async (req, res) => {
     return res.send(course)
   } catch (e) {
     return res.sendStatus(500)
+  }
+})
+
+//  Изменение статуса публикации курса
+
+router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
+  const { id } = req.params
+  try {
+    if (!id) {
+      return res.status(404).send({ message: 'Course not found!' })
+    }
+    const course = await Course.findById(id)
+    if (!course) {
+      return res.status(404).send({ message: 'Artist not found!' })
+    }
+    course.publish = !course.publish
+    await course.save()
+    res.send(course)
+  } catch (e) {
+    res.status(400).send({ error: e.errors })
   }
 })
 

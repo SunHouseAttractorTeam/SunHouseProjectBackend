@@ -7,6 +7,9 @@ const router = express.Router()
 
 router.get('/', auth, async (req, res) => {
   try {
+    const query = {}
+
+    if (req.query.user && !req.query.user) query.user = req.query.user
     const notification = await Notification.find()
     return res.send(notification)
   } catch (e) {
@@ -30,18 +33,16 @@ router.get('/:id', auth, async (req, res) => {
 
 router.post('/', auth, permit('admin'), async (req, res) => {
   try {
-    const { type, description } = req.body
-
-    if (!type && !description) {
+    const { user, description } = req.body
+    if (!user || !description) {
       return res.status(400).send({
         message: 'Data not valid',
       })
     }
 
     const notificationData = {
-      type,
       description,
-      user: req.user._id,
+      user,
     }
 
     const notification = new Notification(notificationData)

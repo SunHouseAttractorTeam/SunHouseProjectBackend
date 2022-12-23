@@ -17,6 +17,7 @@ const Course = require('../models/Course')
 const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
+const Module = require('../models/Module')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -252,161 +253,133 @@ router.post('/googleLogin', async (req, res) => {
   }
 })
 
-// Добавление таска
-
-router.put('/add_task', auth, async (req, res) => {
-  const userId = req.user._id
-  const taskId = req.query.task
-  try {
-    const user = await User.findById(userId)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
-    }
-    const task = await Task.findById(taskId)
-    if (!task) {
-      return res.status(404).send({ message: 'Task not found!' })
-    }
-    const addTask = await User.findByIdAndUpdate(user, { $push: { tasks: { task } } })
-    return res.send(addTask)
-  } catch (e) {
-    return res.status(500)
-  }
-})
-
-// Добавление урока со статусом
-
-router.put('/add_lesson', auth, async (req, res) => {
-  const userId = req.user._id
-  const lessonId = req.query.lesson
-  try {
-    const user = await User.findById(userId)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
-    }
-    const lesson = await Lesson.findById(lessonId)
-    if (!lesson) {
-      return res.status(404).send({ message: 'Lesson not found!' })
-    }
-    const addLesson = await User.findByIdAndUpdate(user, { $push: { lessons: { lesson } } })
-    return res.send(addLesson)
-  } catch (e) {
-    return res.status(500)
-  }
-})
-
-// Добавление теста c счетчиком и статусом
-
-router.put('/add_test', auth, async (req, res) => {
-  const userId = req.user._id
-  const testId = req.query.test
-  try {
-    const user = await User.findById(userId)
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
-    }
-    const test = await Test.findById(testId)
-    if (!test) {
-      return res.status(404).send({ message: 'Test not found!' })
-    }
-    const addTest = await User.findByIdAndUpdate(user, { $push: { tests: { test } } })
-    return res.send(addTest)
-  } catch (e) {
-    return res.status(500)
-  }
-})
-
-// Добавление курса со статусом
+// Добавление курса
 router.put('/add_course', auth, async (req, res) => {
   const courseId = req.query.course
-  const userId = req.user
+  const userId = req.user._id
+
   try {
-    const user = await User.findById(userId)
     const course = await Course.findById(courseId)
     if (!course) {
       return res.status(404).send({ message: 'Course not found!' })
     }
-    if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
+
+    const courseUser = await User.findOne({ _id: userId }, { myCourses: { $elemMatch: { course: courseId } } })
+
+    if (courseUser.myCourses.length !== 0) {
+      return res.status(400).send({ message: 'Пользователь уже подписан на этот курс' })
     }
-    const addCourse = await User.findByIdAndUpdate(user, { $push: { myCourses: { course } } })
-    return res.send(addCourse)
+
+    await User.findByIdAndUpdate(userId, { $push: { myCourses: { course } } })
+
+    const modulesId = await Module.distinct('_id', { course: courseId })
+
+    const tests = await Test.find({ module: { $in: modulesId } })
+    const tasks = await Task.find({ module: { $in: modulesId } })
+    const lessons = await Lesson.find({ module: { $in: modulesId } })
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const test of tests) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(userId, { $push: { tests: { test } } })
+    }
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const task of tasks) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(userId, { $push: { tasks: { task } } })
+    }
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const lesson of lessons) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(userId, { $push: { lessons: { lesson } } })
+    }
+
+    return res.send({ message: 'Контент успешно добавлен' })
   } catch (e) {
     return res.status(500)
   }
 })
 
 // Изменение статуса
+router.patch('/:id/update_status', auth, async (req, res) => {
+  const userId = req.params.id
+  const contentId = req.query.content
 
-router.post('/:id/update_status', auth, async (req, res) => {
-  const { id } = req.params
-  const userId = req.query.userid
   try {
-    const user = await User.findById(userId)
+    const user = await User.findById(req.user._id)
 
     if (!user) {
       return res.status(404).send({ message: 'User not found!' })
     }
     switch (req.query.params) {
       case 'course': {
-        const course = await Course.findById(id)
+        const course = await Course.findById(contentId)
         if (!course) {
           return res.status(404).send({ message: 'Course not found!' })
         }
-        await User.update(
+        await User.updateOne(
           {
             _id: userId,
-            'myCourse.course': id,
+            'myCourses.course': contentId,
           },
-          { $set: { 'myCourses.$.status': false } },
+          { $set: { 'myCourses.$.status': true } },
         )
-        return res.send(user)
+        return res.send({ message: 'Студент прошёл' })
       }
       case 'test': {
-        const test = await Test.findById(id)
+        const test = await Test.findById(contentId)
         if (!test) {
           return res.status(404).send({ message: 'Test not found!' })
         }
-        await User.update(
+        await User.updateOne(
           {
             _id: userId,
-            'tests.test': id,
+            'tests.test': contentId,
           },
-          { $set: { 'tests.$.status': false } },
+          { $set: { 'tests.$.status': true } },
         )
-        return res.send(user)
+        return res.send({ message: 'Студент прошёл' })
       }
       case 'lesson': {
-        const lesson = await Lesson.findById(id)
+        const lesson = await Lesson.findById(contentId)
         if (!lesson) {
           return res.status(404).send({ message: 'Lesson not found!' })
         }
-        await User.update(
+        await User.updateOne(
           {
             _id: userId,
-            'lessons.lesson': id,
+            'lessons.lesson': contentId,
           },
-          { $set: { 'lessons.$.status': false } },
+          { $set: { 'lessons.$.status': true } },
         )
-        return res.send(user)
+        return res.send({ message: 'Студент прошёл' })
       }
       case 'task': {
-        const task = await Task.findById(id)
+        const task = await Task.findById(contentId)
         if (!task) {
           return res.status(404).send({ message: 'Task not found!' })
         }
-        if (user.role === 'teacher') {
-          await User.update(
-            {
-              _id: userId,
-              'tasks.task': id,
-            },
-            { $set: { 'tasks.$.status': false } },
-          )
+
+        const course = await Course.findById(req.query.course)
+        if (!course) return res.status(400).send({ error: 'Course not found!' })
+
+        if (!course.teachers.includes(req.user._id)) {
+          return res.status(403).send({ message: "User don't have permission" })
         }
-        return res.send(user)
+
+        await User.updateOne(
+          {
+            _id: userId,
+            'tasks.task': contentId,
+          },
+          { $set: { 'tasks.$.status': true } },
+        )
+        return res.send({ message: 'Студент прошёл' })
       }
       default:
-        return res.send(user)
+        return res.send({ message: 'Контент не найден!' })
     }
   } catch (e) {
     return res.status(500)

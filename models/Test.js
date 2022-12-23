@@ -2,21 +2,11 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const AnswerSchema = new Schema({
-  title: {
-    type: String,
-  },
-  status: {
-    type: Boolean,
-    default: false,
-  },
-})
-
 const QuestionSchema = new Schema({
   title: {
     type: String,
   },
-  answers: [AnswerSchema],
+  answers: [{ title: String, status: { type: Boolean, default: false } }],
 })
 
 const TestSchema = new Schema({

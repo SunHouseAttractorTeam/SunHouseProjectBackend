@@ -3,11 +3,6 @@ const mongoose = require('mongoose')
 const { Schema } = mongoose
 
 const NotificationSchema = new Schema({
-  type: {
-    type: String,
-    required: true,
-    enum: ['warning', 'success', 'info'],
-  },
   description: {
     required: true,
     type: String,
@@ -16,6 +11,10 @@ const NotificationSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User',
+  },
+  view: {
+    type: Boolean,
+    default: false,
   },
 })
 
