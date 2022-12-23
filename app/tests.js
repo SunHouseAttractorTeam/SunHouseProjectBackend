@@ -46,7 +46,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       return res.status(404).send({ message: 'There are no such module!' })
     }
 
-    const { title, data, random, correct, count, questions } = req.body
+    const { title, random, correct, count } = req.body
 
     if (!title) {
       return res.status(401).send({ message: 'Data not valid' })
@@ -54,13 +54,10 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
 
     const testData = {
       title,
-      questions,
       random,
       correct,
       count,
-      data,
       module: moduleId,
-      file: null,
     }
 
     const test = new Test(testData)
