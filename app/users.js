@@ -52,6 +52,7 @@ router.get('/confirm/:confirmationCode', async (req, res) => {
     }
     user.authentication = true
     await user.save({ validateBeforeSave: false })
+    console.log(user)
     return res.send({ message: 'Account confirm' })
   } catch (e) {
     return res.status(500).send({ message: e })
