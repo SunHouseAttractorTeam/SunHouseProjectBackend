@@ -23,6 +23,10 @@ const MyCourses = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
   },
+  status: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const Tests = new Schema({
@@ -31,11 +35,6 @@ const Tests = new Schema({
     ref: 'Test',
   },
   status: {
-    type: Boolean,
-    default: false,
-  },
-  answers: [],
-  condition: {
     type: Boolean,
     default: false,
   },

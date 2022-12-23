@@ -285,8 +285,6 @@ const run = async () => {
   await module2.updateOne({ $push: { data: { title: test3.title, type: test3.type, _id: test3._id } } })
   await module2.updateOne({ $push: { data: { title: test4.title, type: test4.type, _id: test4._id } } })
   await module3.updateOne({ $push: { data: { title: test5.title, type: test5.type, _id: test5._id } } })
-  await user.updateOne({ $push: { tests: { test: test5 } } })
-  await user.updateOne({ $push: { tests: { test: test2 } } })
 
   await Review.create(
     {
