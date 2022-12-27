@@ -18,6 +18,7 @@ const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
 const Module = require('../models/Module')
+const permit = require('../middleweare/permit')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -448,6 +449,28 @@ router.post('/reset', async (req, res) => {
     return res.send({ message: 'Ваш пароль успешно изменен' })
   } catch (e) {
     return res.status(500)
+  }
+})
+
+router.delete('/:id', auth, permit('admin'), async (req, res) => {
+  try {
+    const userId = req.params.id
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ error: 'Пользователь не найден!' })
+    }
+
+    if (user._id.equals(req.user._id)) {
+      return res.status(400).send({ error: 'Вы не можете удалить себя' })
+    }
+
+    await User.deleteOne({ _id: userId })
+
+    return res.send({ message: 'Пользователь удалён' })
+  } catch {
+    return res.sendStatus(500)
   }
 })
 
