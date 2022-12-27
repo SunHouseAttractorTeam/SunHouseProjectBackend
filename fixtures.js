@@ -92,7 +92,7 @@ const run = async () => {
     },
   )
 
-  const [course1, course2] = await Course.create(
+  const [course1, course2, course3] = await Course.create(
     {
       user: teacher._id,
       category: clining._id,
@@ -123,6 +123,47 @@ const run = async () => {
       category: frontendDev._id,
       price: 10000,
       dateTime: dayjs().format('DD/MM/YYYY'),
+      publish: true,
+    },
+    {
+      user: teacher._id,
+      category: webDes._id,
+      title: 'Web des',
+      description: 'Course test desc',
+      price: 1500,
+      dateTime: dayjs().format('DD/MM/YYYY'),
+      rating: [
+        { user: admin, value: 3 },
+        { user, value: 5 },
+      ],
+      teachers: [teacher],
+      users: [user],
+      publish: true,
+    },
+    {
+      user: admin._id,
+      category: clining._id,
+      title: 'Clining test',
+      description: 'Course test desc',
+      price: 1500,
+      dateTime: dayjs().format('DD/MM/YYYY'),
+      rating: [
+        { user: teacher, value: 3 },
+        { user, value: 5 },
+        { user: tom, value: 2 },
+      ],
+      teachers: [teacher, admin],
+      users: [user, tom],
+      publish: true,
+    },
+    {
+      user: admin._id,
+      category: frontendDev._id,
+      title: 'frontend test',
+      description: 'Course test desc',
+      price: 15500,
+      dateTime: dayjs().format('DD/MM/YYYY'),
+      teachers: [admin],
       publish: true,
     },
   )
