@@ -24,7 +24,7 @@ const run = async () => {
     await mongoose.connection.db.dropCollection(coll.name)
   }
 
-  const [admin, user, teacher, tom] = await User.create(
+  const [admin, user, teacher, tom, hel, ban, ben, tel] = await User.create(
     {
       username: 'Admin',
       email: 'admin@gmail.com',
@@ -65,6 +65,56 @@ const run = async () => {
       authentication: true,
       confirmationCode: 'dwadawd33a',
     },
+    {
+      username: 'Hel',
+      email: 'hel@gmail.com',
+      password: 'hel',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadawd33a23',
+    },
+    {
+      username: 'Ban',
+      email: 'ban@gmail.com',
+      password: 'ban',
+      token: nanoid(),
+      role: 'ban',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadawd33a455',
+    },
+    {
+      username: 'Ben',
+      email: 'ben@gmail.com',
+      password: 'ben',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadawd33a455dwada',
+    },
+    {
+      username: 'Tel',
+      email: 'tel@gmail.com',
+      password: 'tel',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadawwd33a455dwada',
+    },
+    {
+      username: 'Hall',
+      email: 'hall@gmail.com',
+      password: 'hall',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadawwd33adwada455dwada',
+    },
   )
 
   const [webDes, frontendDev, uxuiDes, clining] = await Category.create(
@@ -92,7 +142,7 @@ const run = async () => {
     },
   )
 
-  const [course1, course2] = await Course.create(
+  const [course1, course2, course3] = await Course.create(
     {
       user: teacher._id,
       category: clining._id,
@@ -123,6 +173,47 @@ const run = async () => {
       category: frontendDev._id,
       price: 10000,
       dateTime: dayjs().format('DD/MM/YYYY'),
+      publish: true,
+    },
+    {
+      user: teacher._id,
+      category: webDes._id,
+      title: 'Web des',
+      description: 'Course test desc',
+      price: 1500,
+      dateTime: dayjs().format('DD/MM/YYYY'),
+      rating: [
+        { user: admin, value: 3 },
+        { user, value: 5 },
+      ],
+      teachers: [teacher],
+      users: [user],
+      publish: true,
+    },
+    {
+      user: admin._id,
+      category: clining._id,
+      title: 'Clining test',
+      description: 'Course test desc',
+      price: 1500,
+      dateTime: dayjs().format('DD/MM/YYYY'),
+      rating: [
+        { user: teacher, value: 3 },
+        { user, value: 5 },
+        { user: tom, value: 2 },
+      ],
+      teachers: [teacher, admin],
+      users: [user, tom],
+      publish: true,
+    },
+    {
+      user: admin._id,
+      category: frontendDev._id,
+      title: 'frontend test',
+      description: 'Course test desc',
+      price: 15500,
+      dateTime: dayjs().format('DD/MM/YYYY'),
+      teachers: [admin],
       publish: true,
     },
   )

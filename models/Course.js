@@ -88,6 +88,10 @@ const CourseSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  visibilityModules: {
+    type: Boolean,
+    default: true,
+  },
   private: {
     type: Boolean,
     default: true,

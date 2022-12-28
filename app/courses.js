@@ -110,11 +110,11 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
   const { id } = req.params
   try {
     if (!id) {
-      return res.status(404).send({ message: 'Course not found!' })
+      return res.status(400).send({ message: 'id is null' })
     }
     const course = await Course.findById(id)
     if (!course) {
-      return res.status(404).send({ message: 'Artist not found!' })
+      return res.status(404).send({ message: 'Course not found!' })
     }
     course.publish = !course.publish
     await course.save()
