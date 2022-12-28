@@ -34,11 +34,11 @@ const getLiveSecretCookie = user => {
 
 router.get('/', auth, async (req, res) => {
   try {
-    const query = { role: { $in: ['ban', 'user'] } }
+    const query = { role: { $in: ['ban', 'user'] }, authentication: true }
 
     if (req.query.email) query.email = req.query.email
 
-    const users = await User.find(query)
+    const users = await User.find(query, { name: 1, email: 1, _id: 1, role: 1, username: 1 })
 
     return res.send(users)
   } catch {
