@@ -151,15 +151,11 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
 
 router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
-    const courseId = req.query.course
     const lesson = await Lesson.findById(req.params.id)
-    const course = await Course.findOne({ _id: courseId })
 
     if (!lesson) {
       return res.status(404).send({ message: 'Lesson not found!' })
     }
-
-    if (!course) return res.status(404).send({ message: 'Course not found!' })
 
     const response = await Lesson.deleteOne({ _id: req.params.id })
 
@@ -173,7 +169,7 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
       module.data = module.data.filter(item => item._id.toString() !== lesson._id.toString())
       await module.save()
 
-      return res.send('Success')
+      return res.send({ message: 'Success' })
     }
 
     return res.status(403).send({ error: 'Deleted failed' })

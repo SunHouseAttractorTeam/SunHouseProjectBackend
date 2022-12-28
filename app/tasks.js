@@ -156,13 +156,13 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Task.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
-      const module = await Module.findById(req.query.module)
+      const module = await Module.findById(task.module)
 
       if (!module) {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item._id !== task._id)
+      module.data = module.data.filter(item => item._id.toString() !== task._id.toString())
       await module.save()
 
       return res.send({ message: 'Success' })

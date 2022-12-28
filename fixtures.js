@@ -24,7 +24,7 @@ const run = async () => {
     await mongoose.connection.db.dropCollection(coll.name)
   }
 
-  const [admin, user, teacher, tom, hel, ban, ben, tel] = await User.create(
+  const [admin, user, teacher, tom, hel, ban, ben, tel, hall, test] = await User.create(
     {
       username: 'Admin',
       email: 'admin@gmail.com',
@@ -114,6 +114,36 @@ const run = async () => {
       avatar: 'fixtures/tom.jpg',
       authentication: true,
       confirmationCode: 'dwadadwadawwd33adwada455dwada',
+    },
+    {
+      username: 'Test',
+      email: 'test@gmail.com',
+      password: 'test',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadawdwawadwd33adwada455dwada',
+    },
+    {
+      username: 'Ball',
+      email: 'ball@gmail.com',
+      password: 'ball',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadwadadawdwawadwd33adwada455dwada',
+    },
+    {
+      username: 'End',
+      email: 'end@gmail.com',
+      password: 'endddddddd',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadwaddwaadawdwawadwd33adwada455dwada',
     },
   )
 
