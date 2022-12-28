@@ -34,7 +34,7 @@ const getLiveSecretCookie = user => {
 
 router.get('/', auth, async (req, res) => {
   try {
-    const query = {}
+    const query = { role: { $in: ['ban', 'user'] } }
 
     if (req.query.email) query.email = req.query.email
 
@@ -449,6 +449,33 @@ router.post('/reset', async (req, res) => {
     return res.send({ message: 'Ваш пароль успешно изменен' })
   } catch (e) {
     return res.status(500)
+  }
+})
+
+router.patch('/:id/ban', auth, permit('admin'), async (req, res) => {
+  try {
+    const userId = req.params.id
+    const { role } = req.query
+
+    if (role === 'admin') {
+      return res.status(400).send({ error: 'Вы не можете выдать админку!' })
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ error: 'Пользователь не найден!' })
+    }
+
+    if (user._id.equals(req.user._id)) {
+      return res.status(400).send({ error: 'Вы не можете поменять себе роль!' })
+    }
+
+    await User.findByIdAndUpdate(userId, { role })
+
+    return res.send({ message: 'Роль пользователя успешно изменён!' })
+  } catch (e) {
+    return res.sendStatus(500)
   }
 })
 

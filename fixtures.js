@@ -24,7 +24,7 @@ const run = async () => {
     await mongoose.connection.db.dropCollection(coll.name)
   }
 
-  const [admin, user, teacher, tom] = await User.create(
+  const [admin, user, teacher, tom, hel, ban, ben, tel] = await User.create(
     {
       username: 'Admin',
       email: 'admin@gmail.com',
@@ -64,6 +64,56 @@ const run = async () => {
       avatar: 'fixtures/tom.jpg',
       authentication: true,
       confirmationCode: 'dwadawd33a',
+    },
+    {
+      username: 'Hel',
+      email: 'hel@gmail.com',
+      password: 'hel',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadawd33a23',
+    },
+    {
+      username: 'Ban',
+      email: 'ban@gmail.com',
+      password: 'ban',
+      token: nanoid(),
+      role: 'ban',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadawd33a455',
+    },
+    {
+      username: 'Ben',
+      email: 'ben@gmail.com',
+      password: 'ben',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadawd33a455dwada',
+    },
+    {
+      username: 'Tel',
+      email: 'tel@gmail.com',
+      password: 'tel',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadawwd33a455dwada',
+    },
+    {
+      username: 'Hall',
+      email: 'hall@gmail.com',
+      password: 'hall',
+      token: nanoid(),
+      role: 'user',
+      avatar: 'fixtures/tom.jpg',
+      authentication: true,
+      confirmationCode: 'dwadadwadawwd33adwada455dwada',
     },
   )
 

@@ -151,7 +151,6 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
 
 router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
-    const moduleId = req.query.module
     const courseId = req.query.course
     const lesson = await Lesson.findById(req.params.id)
     const course = await Course.findOne({ _id: courseId })
@@ -165,13 +164,13 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Lesson.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
-      const module = await Module.findOne({ _id: moduleId })
+      const module = await Module.findById(lesson.module)
 
       if (!module) {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item._id !== lesson._id)
+      module.data = module.data.filter(item => item._id.toString() !== lesson._id.toString())
       await module.save()
 
       return res.send('Success')
