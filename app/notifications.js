@@ -45,7 +45,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       const { description } = req.body
       if (!description) {
         return res.status(400).send({
-          message: 'Data not valid',
+          message: 'Введенные данные не верны!',
         })
       }
       const users = await User.find()
@@ -69,7 +69,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
     const { user, description } = req.body
     if (!user || !description) {
       return res.status(400).send({
-        message: 'Data not valid',
+        message: 'Введенные данные не верны!',
       })
     }
 
@@ -118,7 +118,7 @@ router.put('/:id', auth, permit('admin'), async (req, res) => {
 
     if (!type && !description) {
       return res.status(400).send({
-        message: 'Data not valid',
+        message: 'Введенные данные не верны!',
       })
     }
 

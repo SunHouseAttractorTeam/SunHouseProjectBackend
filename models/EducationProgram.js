@@ -5,7 +5,7 @@ const { Schema } = mongoose
 const EducationProgramSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
   },
   description: {
     type: String,

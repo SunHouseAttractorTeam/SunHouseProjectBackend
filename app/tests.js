@@ -49,7 +49,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
     const { title, random, correct, count } = req.body
 
     if (!title) {
-      return res.status(401).send({ message: 'Data not valid' })
+      return res.status(401).send({ message: 'Введите название' })
     }
 
     const testData = {
@@ -120,13 +120,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
     const { title } = data.splice(0, 1)[0]
 
     if (!title) {
-      return res.status(400).send({
-        message: 'Data not valid',
-      })
-    }
-
-    if (!title) {
-      return res.status(401).send({ message: 'Data not valid' })
+      return res.status(401).send({ message: 'Введите название' })
     }
 
     const test = await Test.findById(req.params.id)

@@ -65,15 +65,15 @@ const Tasks = new Schema({
 const UserSchema = new Schema({
   username: {
     type: String,
-    required: true,
+    required: { message: 'Введите имя' },
   },
   email: {
     type: String,
-    required: true,
+    required: { message: 'Введите email' },
     unique: true,
     validate: [
-      { validator: validateEmail, message: 'Email is not valid!' },
-      { validator: validateUnique, message: 'kThis user is already registered' },
+      { validator: validateEmail, message: 'Неправильный формат email!' },
+      { validator: validateUnique, message: 'Такой пользователеь уже есть!' },
     ],
   },
   confirmationCode: {
@@ -82,7 +82,7 @@ const UserSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: { message: 'Введите пароль' },
   },
   newPassword: {
     type: String,

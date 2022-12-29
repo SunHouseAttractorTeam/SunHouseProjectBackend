@@ -8,7 +8,7 @@ const { Schema } = mongoose
 const ModuleSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
   },
   course: {
     type: Schema.Types.ObjectId,

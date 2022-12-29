@@ -5,7 +5,7 @@ const { Schema } = mongoose
 const TaskSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
     unique: true,
   },
   type: {

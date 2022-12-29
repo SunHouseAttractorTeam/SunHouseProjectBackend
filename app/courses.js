@@ -43,7 +43,7 @@ router.post('/', auth, async (req, res) => {
     const { title, description, category, price } = req.body
 
     if (!title || !category) {
-      return res.status(401).send({ message: 'Data not valid!' })
+      return res.status(401).send({ message: 'Введенные данные не верны!' })
     }
     const courseData = {
       title,
@@ -114,7 +114,7 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
     }
     const course = await Course.findById(id)
     if (!course) {
-      return res.status(404).send({ message: 'Artist not found!' })
+      return res.status(404).send({ message: 'Course not found!' })
     }
     course.publish = !course.publish
     await course.save()
@@ -127,7 +127,7 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
 router.put('/:id', auth, upload.single('image'), async (req, res) => {
   const { title, description, category, private } = req.body
   if (!title || !category) {
-    return res.status(401).send({ message: 'Data not valid!' })
+    return res.status(401).send({ message: 'Введенные данные не верны!' })
   }
   const courseData = {
     title,

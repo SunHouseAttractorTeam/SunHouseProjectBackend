@@ -5,7 +5,7 @@ const { Schema } = mongoose
 const LessonSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
   },
   type: {
     type: String,
