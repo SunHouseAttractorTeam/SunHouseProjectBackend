@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
     const course = await Course.findById(req.params.id).populate('modules')
 
     if (!course) {
-      return res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Такого курса нет!' })
     }
 
     return res.send(course)
@@ -80,11 +80,11 @@ router.put('/add', auth, async (req, res) => {
       user = await User.findById(ownerId)
     }
     if (!user) {
-      return res.status(404).send({ message: 'User not found!' })
+      return res.status(404).send({ message: 'Такого пользователя нет!' })
     }
     const course = await Course.findById(courseID)
     if (!course) {
-      return res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Такого курса нет!' })
     }
     if (userId) {
       if (!course.users.includes(userId)) {
@@ -110,11 +110,11 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
   const { id } = req.params
   try {
     if (!id) {
-      return res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Такого курса нет!' })
     }
     const course = await Course.findById(id)
     if (!course) {
-      return res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Такого курса нет!' })
     }
     course.publish = !course.publish
     await course.save()
@@ -145,7 +145,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     const course = await Course.findById(req.params.id)
 
     if (!course) {
-      return res.status(404).send({ message: 'Course not found!' })
+      return res.status(404).send({ message: 'Такого курса нет!' })
     }
     const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData)
     return res.send(updateCourse)
