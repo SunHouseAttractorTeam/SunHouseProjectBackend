@@ -37,7 +37,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
     const { course } = req.query
 
     if (!title || !course) {
-      return res.status(400).send({ error: 'Data not valid' })
+      return res.status(400).send({ error: 'Введенные данные не верны!' })
     }
 
     const modulesData = {

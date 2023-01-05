@@ -54,7 +54,6 @@ router.get('/confirm/:confirmationCode', async (req, res) => {
     }
     user.authentication = true
     await user.save({ validateBeforeSave: false })
-    console.log(user)
     return res.send({ message: 'Account confirm' })
   } catch (e) {
     return res.status(500).send({ message: e })
@@ -66,20 +65,16 @@ router.post('/', async (req, res) => {
     const secretToken = getLiveSecretCookie({ email: req.body.email })
     const { email, password, username } = req.body
 
-    if (!email || !password || !username) {
-      return res.status(400).send({ error: 'Data not valid' })
-    }
-
     const userData = { email, password, username, confirmationCode: secretToken.token }
 
     const user = new User(userData)
 
     const { token, maxAge } = getLiveCookie(user)
 
-    // res.cookie('jwt', token, {
-    //     httpOnly: false,
-    //     maxAge: maxAge * 1000,
-    // })
+    res.cookie('jwt', token, {
+      httpOnly: false,
+      maxAge: maxAge * 1000,
+    })
 
     user.token = token
 
@@ -100,19 +95,23 @@ router.post('/sessions', async (req, res) => {
       return res.send(user)
     }
 
+    if (!req.body.email || !req.body.password) {
+      return res.status(401).send({ message: 'Введенные данные не верны!' })
+    }
+
     const user = await User.findOne({ email: req.body.email })
 
     if (!user) {
-      return res.status(401).send({ error: 'Credentials are wrong!' })
+      return res.status(401).send({ message: 'Введенные данные не верны!' })
     }
 
     if (user.authentication !== true) {
-      return res.status(401).send({ message: 'Pending account. Please verify your email' })
+      return res.status(401).send({ message: 'Пожалуйста, подтвердите свою регистрацию на почте!' })
     }
 
     const isMatch = await user.checkPassword(req.body.password)
     if (!isMatch) {
-      res.status(401).send({ error: 'Credentials are wrong!' })
+      return res.status(401).send({ message: 'Введенные данные не верны!' })
     }
 
     const { token, maxAge } = getLiveCookie(user)
@@ -127,7 +126,7 @@ router.post('/sessions', async (req, res) => {
 
     return res.send(user)
   } catch (e) {
-    return res.status(500)
+    return res.status(500).send(e)
   }
 })
 

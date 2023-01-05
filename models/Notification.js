@@ -4,7 +4,7 @@ const { Schema } = mongoose
 
 const NotificationSchema = new Schema({
   description: {
-    required: true,
+    required: { message: 'Введите описание' },
     type: String,
   },
   user: {

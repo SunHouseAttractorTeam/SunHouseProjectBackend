@@ -33,7 +33,7 @@ router.post('/', auth, async (req, res) => {
 
     if (!title) {
       return res.status(400).send({
-        message: 'Data not valid',
+        message: 'Введенные данные не верны!',
       })
     }
 
@@ -55,7 +55,7 @@ router.put('/:id', auth, async (req, res) => {
     const { title, description } = req.body
 
     if (!title) {
-      return res.status(400).send({ error: 'Data not valid' })
+      return res.status(400).send({ message: 'Введенные данные не верны!' })
     }
 
     const categoryData = {

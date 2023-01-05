@@ -48,7 +48,7 @@ router.post('/', auth, permit('admin'), upload.single('image'), async (req, res)
     const { name, socialNetwork, description } = req.body
     if (!name || !socialNetwork || !description) {
       return res.status(400).send({
-        message: 'Data not valid',
+        message: 'Введенные данные не верны!',
       })
     }
 
@@ -76,7 +76,7 @@ router.put('/:id', auth, permit('admin'), async (req, res) => {
     const { text, socialNetwork } = req.body
 
     if (!text || !socialNetwork) {
-      return res.status(400).send({ error: 'Data not valid' })
+      return res.status(400).send({ message: 'Введенные данные не верны!' })
     }
 
     const reviewData = {

@@ -45,7 +45,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
 
     if (!title) {
       return res.status(400).send({
-        message: 'Data not valid',
+        message: 'Введите название',
       })
     }
 
@@ -99,7 +99,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
 
     if (!title) {
       return res.status(400).send({
-        message: 'Data not valid',
+        message: 'Введите название',
       })
     }
 
