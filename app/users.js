@@ -70,10 +70,10 @@ router.post('/', async (req, res) => {
 
     const { token, maxAge } = getLiveCookie(user)
 
-    // res.cookie('jwt', token, {
-    //     httpOnly: false,
-    //     maxAge: maxAge * 1000,
-    // })
+    res.cookie('jwt', token, {
+      httpOnly: false,
+      maxAge: maxAge * 1000,
+    })
 
     user.token = token
 
@@ -110,7 +110,7 @@ router.post('/sessions', async (req, res) => {
 
     const isMatch = await user.checkPassword(req.body.password)
     if (!isMatch) {
-      res.status(401).send({ message: 'Введенные данные не верны!' })
+      return res.status(401).send({ message: 'Введенные данные не верны!' })
     }
 
     const { token, maxAge } = getLiveCookie(user)
