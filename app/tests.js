@@ -229,16 +229,7 @@ router.patch('/:id', auth, async (req, res) => {
 
 router.delete('/:id', auth, searchAccesser, async (req, res) => {
   try {
-    const moduleId = req.query.module
-    const courseId = req.query.course
     const test = await Test.findById(req.params.id)
-    const course = await Course.findById(courseId)
-
-    if (!course) return res.status(404).send({ message: 'Course not found!' })
-
-    if (!course.teachers.includes(req.user._id) && req.user.role !== 'admin') {
-      return res.status(404).send({ message: 'Authorization error!' })
-    }
 
     if (!test) {
       return res.status(404).send({ message: 'Test not found' })
@@ -247,16 +238,16 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Test.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
-      const module = await Module.findOne({ _id: moduleId })
+      const module = await Module.findById(test.module)
 
       if (!module) {
         return res.status(404).send({ message: 'There are no such module!' })
       }
 
-      module.data = module.data.filter(item => item._id !== test._id)
+      module.data = module.data.filter(item => item._id.toString() !== test._id.toString())
       await module.save()
 
-      return res.send('Success')
+      return res.send({ message: 'Success' })
     }
 
     return res.status(403).send({ error: 'Deleted failed' })

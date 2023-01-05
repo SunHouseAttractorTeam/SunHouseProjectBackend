@@ -18,6 +18,7 @@ const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
 const Module = require('../models/Module')
+const permit = require('../middleweare/permit')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -33,11 +34,11 @@ const getLiveSecretCookie = user => {
 
 router.get('/', auth, async (req, res) => {
   try {
-    const query = {}
+    const query = { role: { $in: ['ban', 'user'] }, authentication: true }
 
     if (req.query.email) query.email = req.query.email
 
-    const users = await User.find(query)
+    const users = await User.find(query, { name: 1, email: 1, _id: 1, role: 1, username: 1 })
 
     return res.send(users)
   } catch {
@@ -447,6 +448,55 @@ router.post('/reset', async (req, res) => {
     return res.send({ message: 'Ваш пароль успешно изменен' })
   } catch (e) {
     return res.status(500)
+  }
+})
+
+router.patch('/:id/ban', auth, permit('admin'), async (req, res) => {
+  try {
+    const userId = req.params.id
+    const { role } = req.query
+
+    if (role === 'admin') {
+      return res.status(400).send({ error: 'Вы не можете выдать админку!' })
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ error: 'Пользователь не найден!' })
+    }
+
+    if (user._id.equals(req.user._id)) {
+      return res.status(400).send({ error: 'Вы не можете поменять себе роль!' })
+    }
+
+    await User.findByIdAndUpdate(userId, { role })
+
+    return res.send({ message: 'Роль пользователя успешно изменён!' })
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
+router.delete('/:id', auth, permit('admin'), async (req, res) => {
+  try {
+    const userId = req.params.id
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ error: 'Пользователь не найден!' })
+    }
+
+    if (user._id.equals(req.user._id)) {
+      return res.status(400).send({ error: 'Вы не можете удалить себя' })
+    }
+
+    await User.deleteOne({ _id: userId })
+
+    return res.send({ message: 'Пользователь удалён' })
+  } catch {
+    return res.sendStatus(500)
   }
 })
 

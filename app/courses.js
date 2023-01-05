@@ -115,6 +115,7 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
     const course = await Course.findById(id)
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
+      return res.status(400).send({ message: 'id is null' })
     }
     course.publish = !course.publish
     await course.save()
