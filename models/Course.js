@@ -63,7 +63,7 @@ const CourseSchema = new Schema({
   },
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
   },
   rating: [RatingSchema],
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
@@ -72,7 +72,7 @@ const CourseSchema = new Schema({
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    required: true,
+    required: { message: 'Выберете категорю' },
   },
   WillLearn: WillLearnSchema,
   teachersBlock: teachersBlockSchema,

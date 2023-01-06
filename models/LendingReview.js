@@ -5,11 +5,11 @@ const { Schema } = mongoose
 const ReviewSchema = new Schema({
   name: {
     type: String,
-    required: true,
+    required: { message: 'Введите имя' },
   },
   description: {
     type: String,
-    required: true,
+    required: { message: 'Введите описание' },
   },
   socialNetwork: {
     type: String,

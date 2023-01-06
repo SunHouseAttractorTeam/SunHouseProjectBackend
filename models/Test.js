@@ -12,7 +12,7 @@ const QuestionSchema = new Schema({
 const TestSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
   },
   type: {
     type: String,

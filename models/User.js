@@ -66,15 +66,15 @@ const UserSchema = new Schema({
   name: String,
   username: {
     type: String,
-    required: true,
+    required: { message: 'Введите имя' },
   },
   email: {
     type: String,
-    required: true,
+    required: { message: 'Введите email' },
     unique: true,
     validate: [
-      { validator: validateEmail, message: 'Email is not valid!' },
-      { validator: validateUnique, message: 'kThis user is already registered' },
+      { validator: validateEmail, message: 'Неправильный формат email!' },
+      { validator: validateUnique, message: 'Такой пользователеь уже есть!' },
     ],
   },
   phone: String,
@@ -86,7 +86,7 @@ const UserSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: { message: 'Введите пароль' },
   },
   newPassword: {
     type: String,

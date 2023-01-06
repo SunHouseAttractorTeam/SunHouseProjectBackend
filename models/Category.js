@@ -6,7 +6,7 @@ const { Schema } = mongoose
 const CategorySchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: { message: 'Введите название' },
     unique: true,
   },
   description: String,
