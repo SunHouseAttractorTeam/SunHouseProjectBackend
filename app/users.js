@@ -456,6 +456,10 @@ router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
   try {
     const userData = req.body
 
+    if (!userData.username || !userData.email) {
+      return res.status(400).send({ error: 'username и email обязателен!' })
+    }
+
     if (req.file !== undefined) {
       userData.avatar = `uploads/${req.file.filename}`
     }
