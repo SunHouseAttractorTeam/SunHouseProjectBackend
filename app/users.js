@@ -5,20 +5,21 @@ const { VKAPI } = require('vkontakte-api')
 const { OAuth2Client } = require('google-auth-library')
 const validator = require('email-validator')
 const crypto = require('crypto')
-const User = require('../models/User')
-const config = require('../config')
-const nodemailer = require('./nodemailer')
 
-const client = new OAuth2Client()
 const router = express.Router()
+const client = new OAuth2Client()
 const utils = require('../middleweare/token')
+const nodemailer = require('./nodemailer')
 const auth = require('../middleweare/auth')
+const permit = require('../middleweare/permit')
+const upload = require('../middleweare/upload')
+const User = require('../models/User')
 const Course = require('../models/Course')
 const Test = require('../models/Test')
 const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
 const Module = require('../models/Module')
-const permit = require('../middleweare/permit')
+const config = require('../config')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -449,6 +450,22 @@ router.post('/reset', async (req, res) => {
     return res.send({ message: 'Ваш пароль успешно изменен' })
   } catch (e) {
     return res.status(500)
+  }
+})
+
+router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
+  try {
+    const userData = req.body
+
+    if (req.file !== undefined) {
+      userData.avatar = `uploads/${req.file.filename}`
+    }
+
+    const user = await User.findByIdAndUpdate(req.user._id, userData, { new: true })
+
+    return res.send(user)
+  } catch (e) {
+    return res.status(500).send({ message: e })
   }
 })
 

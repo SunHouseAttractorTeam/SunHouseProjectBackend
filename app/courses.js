@@ -7,6 +7,7 @@ const auth = require('../middleweare/auth')
 const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
+const searchAccesser = require('../middleweare/searchAccesser')
 
 const router = express.Router()
 
@@ -178,6 +179,29 @@ router.put('/', auth, async (req, res) => {
     ])
 
     return res.send(updatedRating[0])
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
+router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), async (req, res) => {
+  try {
+    const id = req.query.course
+
+    let image
+    if (req.file !== undefined) {
+      image = req.file.filename
+    }
+
+    const course = await Course.findById(id)
+
+    if (!course) {
+      return res.status(404).send({ message: 'Курс не найден!' })
+    }
+
+    await Course.findByIdAndUpdate(id, { headerImage: image })
+
+    return res.send({ message: 'Картинка успешно сменен!' })
   } catch (e) {
     return res.sendStatus(500)
   }

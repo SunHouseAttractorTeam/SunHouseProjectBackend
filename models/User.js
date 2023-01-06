@@ -63,6 +63,7 @@ const Tasks = new Schema({
 })
 
 const UserSchema = new Schema({
+  name: String,
   username: {
     type: String,
     required: true,
@@ -76,6 +77,9 @@ const UserSchema = new Schema({
       { validator: validateUnique, message: 'kThis user is already registered' },
     ],
   },
+  phone: String,
+  country: String,
+  city: String,
   confirmationCode: {
     type: String,
     unique: true,
