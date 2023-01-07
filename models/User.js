@@ -63,6 +63,7 @@ const Tasks = new Schema({
 })
 
 const UserSchema = new Schema({
+  name: String,
   username: {
     type: String,
     required: { message: 'Введите имя' },
@@ -76,6 +77,9 @@ const UserSchema = new Schema({
       { validator: validateUnique, message: 'Такой пользователеь уже есть!' },
     ],
   },
+  phone: String,
+  country: String,
+  city: String,
   confirmationCode: {
     type: String,
     unique: true,

@@ -7,6 +7,7 @@ const auth = require('../middleweare/auth')
 const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
+const searchAccesser = require('../middleweare/searchAccesser')
 
 const router = express.Router()
 
@@ -115,7 +116,6 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
     const course = await Course.findById(id)
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
-      return res.status(400).send({ message: 'id is null' })
     }
     course.publish = !course.publish
     await course.save()
@@ -126,7 +126,7 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
 })
 
 router.put('/:id', auth, upload.single('image'), async (req, res) => {
-  const { title, description, category, private } = req.body
+  const { title, description, category, private, image } = req.body
   if (!title || !category) {
     return res.status(401).send({ message: 'Введенные данные не верны!' })
   }
@@ -135,7 +135,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     description,
     category,
     private,
-    image: null,
+    image: image !== '' ? image : null,
   }
 
   if (req.file) {
@@ -179,6 +179,29 @@ router.put('/', auth, async (req, res) => {
     ])
 
     return res.send(updatedRating[0])
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
+router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), async (req, res) => {
+  try {
+    const id = req.query.course
+
+    let image
+    if (!req.file) {
+      image = `uploads/${req.file.filename}`
+    }
+
+    const course = await Course.findById(id)
+
+    if (!course) {
+      return res.status(404).send({ message: 'Курс не найден!' })
+    }
+
+    await Course.findByIdAndUpdate(id, { headerImage: image })
+
+    return res.send({ message: 'Картинка успешно сменен!' })
   } catch (e) {
     return res.sendStatus(500)
   }
