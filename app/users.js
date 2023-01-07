@@ -460,7 +460,7 @@ router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
       return res.status(400).send({ error: 'username и email обязателен!' })
     }
 
-    if (req.file !== undefined) {
+    if (req.file) {
       userData.avatar = `uploads/${req.file.filename}`
     }
 
@@ -468,7 +468,30 @@ router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
 
     return res.send(user)
   } catch (e) {
-    return res.status(500).send({ message: e })
+    return res.status(500).send({ error: e })
+  }
+})
+
+router.put('/edit_password', auth, async (req, res) => {
+  try {
+    const { password, newPassword } = req.body
+    const { user } = req
+
+    if (!password || !newPassword) {
+      return res.status(400).send({ error: 'Введите правильный пароль' })
+    }
+
+    const isMatch = await user.checkPassword(password)
+    if (!isMatch) {
+      return res.status(401).send({ error: 'Введен неверный пароль!' })
+    }
+
+    user.password = newPassword
+    await user.save({ validateBeforeSave: false })
+
+    return res.send(user)
+  } catch (e) {
+    return res.status(500).send({ error: e })
   }
 })
 
