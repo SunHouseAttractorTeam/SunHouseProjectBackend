@@ -189,8 +189,8 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
     const id = req.query.course
 
     let image
-    if (req.file !== undefined) {
-      image = req.file.filename
+    if (!req.file) {
+      image = `uploads/${req.file.filename}`
     }
 
     const course = await Course.findById(id)
