@@ -90,13 +90,13 @@ router.post('/', async (req, res) => {
 })
 
 router.post('/sessions', async (req, res) => {
-  if (req.query.path === 'login') {
-    try {
-      if (req.cookies.jwt) {
-        const user = await User.findOne({ token: req.cookies.jwt })
-        return res.send(user)
-      }
+  try {
+    if (req.cookies.jwt) {
+      const user = await User.findOne({ token: req.cookies.jwt })
+      return res.send(user)
+    }
 
+    if (req.query.path === 'login') {
       if (!req.body.email || !req.body.password) {
         return res.status(401).send({ message: 'Введенные данные не верны!' })
       }
@@ -127,18 +127,14 @@ router.post('/sessions', async (req, res) => {
       await user.save({ validateBeforeSave: false })
 
       return res.send(user)
-    } catch (e) {
-      return res.status(500).send(e)
     }
-  }
 
-  if (req.query.path === 'facebookLogin') {
-    const inputToken = req.body.accessToken
-    const accessToken = `${config.facebook.appId}|${config.facebook.appSecret}`
+    if (req.query.path === 'facebookLogin') {
+      const inputToken = req.body.accessToken
+      const accessToken = `${config.facebook.appId}|${config.facebook.appSecret}`
 
-    const debugTokenUrl = `https://graph.facebook.com/debug_token?input_token=${inputToken}&access_token=${accessToken}`
+      const debugTokenUrl = `https://graph.facebook.com/debug_token?input_token=${inputToken}&access_token=${accessToken}`
 
-    try {
       const response = await axios.get(debugTokenUrl)
 
       if (response.data.data.error) {
@@ -170,17 +166,13 @@ router.post('/sessions', async (req, res) => {
 
       await user.save({ validateBeforeSave: false })
       return res.send(user)
-    } catch (e) {
-      return res.status(401).send({ message: 'Facebook token incorrect!' })
     }
-  }
 
-  if (req.query.path === 'vkLogin') {
-    const api = new VKAPI({
-      accessToken: req.body.session.sid,
-    })
-
-    try {
+    if (req.query.path === 'vkLogin') {
+      const api = new VKAPI({
+        accessToken: req.body.session.sid,
+      })
+      console.log('vk')
       const { user } = req.body.session
       const ticket = await api.users.get({ user_ids: [user.id], fields: ['photo_max_orig'] })
 
@@ -210,16 +202,12 @@ router.post('/sessions', async (req, res) => {
 
       userIs.token = token
       await userIs.save({ validateBeforeSave: false })
-
       return res.send(userIs)
-    } catch (e) {
-      return res.status(401).send({ message: 'VK token incorrect!' })
     }
-  }
 
-  if (req.query.path === 'googleLogin') {
-    const { credential, clientId } = req.body
-    try {
+    if (req.query.path === 'googleLogin') {
+      const { credential, clientId } = req.body
+
       const ticket = await client.verifyIdToken({
         idToken: `${credential}`,
         audience: clientId,
@@ -250,9 +238,9 @@ router.post('/sessions', async (req, res) => {
       user.token = token
       await user.save({ validateBeforeSave: false })
       return res.send(user)
-    } catch (e) {
-      return res.status(401).send({ message: 'Google token incorrect!' })
     }
+  } catch (e) {
+    return res.status(500).send({ error: e })
   }
 })
 
