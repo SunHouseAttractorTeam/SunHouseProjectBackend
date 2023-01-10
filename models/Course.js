@@ -6,44 +6,6 @@ const Test = require('./Test')
 
 const { Schema } = mongoose
 
-const WillLearnSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    default: 'чему вы научитесь',
-  },
-  visibility: {
-    type: Boolean,
-    default: true,
-  },
-  data: [
-    {
-      title: {
-        type: String,
-        required: true,
-      },
-      image: String,
-      description: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
-})
-
-const teachersBlockSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    default: 'преподаватели',
-  },
-  visibility: {
-    type: Boolean,
-    default: true,
-  },
-  data: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-})
-
 const RatingSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +15,12 @@ const RatingSchema = new Schema({
     type: Number,
     min: 0,
     max: 5,
+  },
+  instagram: {
+    type: String,
+  },
+  review: {
+    type: String,
   },
 })
 
@@ -74,8 +42,19 @@ const CourseSchema = new Schema({
     ref: 'Category',
     required: { message: 'Выберете категорю' },
   },
-  WillLearn: WillLearnSchema,
-  teachersBlock: teachersBlockSchema,
+  willLearn: [
+    {
+      title: {
+        type: String,
+        required: true,
+      },
+      image: String,
+      description: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
   price: {
     type: Number,
     min: 0,
@@ -89,6 +68,14 @@ const CourseSchema = new Schema({
     default: false,
   },
   visibilityModules: {
+    type: Boolean,
+    default: true,
+  },
+  visibilityTeachers: {
+    type: Boolean,
+    default: true,
+  },
+  visibilityWillLearn: {
     type: Boolean,
     default: true,
   },
