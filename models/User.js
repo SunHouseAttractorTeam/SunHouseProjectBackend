@@ -61,6 +61,13 @@ const Tasks = new Schema({
     type: Boolean,
     default: false,
   },
+  passed: {
+    type: String,
+    required: true,
+    default: 'null',
+    enum: ['null', 'rejected', 'pending', 'success'],
+  },
+  file: String,
 })
 
 const UserSchema = new Schema({

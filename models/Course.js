@@ -86,6 +86,13 @@ const CourseSchema = new Schema({
   description: String,
   image: String,
   headerImage: String,
+  pendingTasks: [
+    {
+      user: { type: Schema.Types.ObjectId, ref: 'User' },
+      file: String,
+      task: { type: Schema.Types.ObjectId, ref: 'Task' },
+    },
+  ],
 })
 
 CourseSchema.pre('deleteOne', async function (next) {

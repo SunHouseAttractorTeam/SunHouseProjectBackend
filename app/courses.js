@@ -12,7 +12,18 @@ const searchAccesser = require('../middleweare/searchAccesser')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
+  const { id } = req.query
+
+  if (id) {
+    const course = await Course.findOne({ _id: id })
+      .populate('users', 'username')
+      .populate('modules', 'title data')
+      .populate('teachers.user', 'username avatar')
+    return res.send(course)
+  }
+
   const query = {}
+
   if (req.query.category) query.category = req.query.category
   try {
     const courses = await Course.find(query).sort({ dateTime: 1 }).populate({
@@ -104,20 +115,6 @@ router.get('/:id/course', auth, searchAccesser, async (req, res) => {
     return res.send(userData)
   } catch (e) {
     return res.status(500).send(e)
-  }
-})
-
-router.get('/:id', async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.id).populate('modules')
-
-    if (!course) {
-      return res.status(404).send({ message: 'Такого курса нет!' })
-    }
-
-    return res.send(course)
-  } catch (e) {
-    return res.sendStatus(500)
   }
 })
 
@@ -249,15 +246,15 @@ router.post('/rating_course', auth, async (req, res) => {
     const course = await Course.find({ _id: id, rating: { $elemMatch: { user: req.user._id } } })
 
     if (course.length === 0) {
-      const newRating = { rating, user: req.user._id }
+      const newRating = { value: rating, user: req.user._id }
       await Course.updateOne({ _id: id }, { $push: { rating: newRating } })
     } else {
-      await Course.updateOne({ _id: id, 'rating.user': req.user._id }, { $set: { 'rating.$.rating': rating } })
+      await Course.updateOne({ _id: id, 'rating.user': req.user._id }, { $set: { 'rating.$.value': rating } })
     }
 
     const updatedRating = await Course.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(id) } },
-      { $addFields: { ratingAverage: { $avg: '$rating.rating' } } },
+      { $addFields: { ratingAverage: { $avg: '$rating.value' } } },
     ])
 
     return res.send(updatedRating[0])
