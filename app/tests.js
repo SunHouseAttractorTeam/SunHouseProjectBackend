@@ -2,7 +2,6 @@ const express = require('express')
 
 const Test = require('../models/Test')
 const Module = require('../models/Module')
-const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
@@ -28,7 +27,7 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const test = await Test.findById(req.params.id)
 
-    if (!test) return res.status(404).send({ message: 'Test no found' })
+    if (!test) return res.status(404).send({ message: 'Такого теста нет!' })
 
     return res.send(test)
   } catch (e) {
@@ -43,10 +42,10 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
     const module = await Module.findOne({ _id: moduleId })
 
     if (!module) {
-      return res.status(404).send({ message: 'There are no such module!' })
+      return res.status(404).send({ message: 'Такого модуля нет!!' })
     }
 
-    const { title, random, correct, count } = req.body
+    const { title, random, correct } = req.body
 
     if (!title) {
       return res.status(401).send({ message: 'Введите название' })
@@ -56,7 +55,6 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       title,
       random,
       correct,
-      count,
       module: moduleId,
     }
 
@@ -82,7 +80,7 @@ router.put('/:id/questions', auth, searchAccesser, async (req, res) => {
 
     const test = await Test.findById(req.params.id)
 
-    if (!test) return res.status(404).send({ message: 'Test not found' })
+    if (!test) return res.status(404).send({ message: 'Такого теста нет!' })
 
     const updateTest = await Test.findByIdAndUpdate(req.params.id, { questions }, { new: true })
 
@@ -125,7 +123,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
 
     const test = await Test.findById(req.params.id)
 
-    if (!test) return res.status(404).send({ message: 'Test not found' })
+    if (!test) return res.status(404).send({ message: 'Такого теста нет!' })
 
     const updateTest = await Test.findByIdAndUpdate(
       req.params.id,
@@ -141,7 +139,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       const module = await Module.findOne({ _id: test.module })
 
       if (!module) {
-        return res.status(404).send({ message: 'There are no such module!' })
+        return res.status(404).send({ message: 'Такого модуля нет!!' })
       }
 
       const itemToData = {
@@ -172,7 +170,7 @@ router.patch('/:id', auth, async (req, res) => {
 
     const test = await Test.findById(testId)
 
-    if (!test) return res.status(404).send({ message: 'Test not found' })
+    if (!test) return res.status(404).send({ message: 'Такого теста нет!' })
 
     const answeredQuest = req.body.test
     const { user } = req
@@ -232,7 +230,7 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const test = await Test.findById(req.params.id)
 
     if (!test) {
-      return res.status(404).send({ message: 'Test not found' })
+      return res.status(404).send({ message: 'Такого теста нет!' })
     }
 
     const response = await Test.deleteOne({ _id: req.params.id })
@@ -241,7 +239,7 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
       const module = await Module.findById(test.module)
 
       if (!module) {
-        return res.status(404).send({ message: 'There are no such module!' })
+        return res.status(404).send({ message: 'Такого модуля нет!' })
       }
 
       module.data = module.data.filter(item => item._id.toString() !== test._id.toString())
