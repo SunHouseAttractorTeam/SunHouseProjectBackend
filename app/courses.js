@@ -157,11 +157,11 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 
 // Добавление рейтинга
 
-router.put('/', auth, async (req, res) => {
+router.post('/add-rating', auth, async (req, res) => {
   try {
-    const { id, rating } = req.body
-    if (!rating) {
-      return res.status(400).send('Data not valid')
+    const { id, rating, instagram, review } = req.body
+    if (!Number.isInteger(rating) || !instagram || !review) {
+      return res.status(400).send('Заполните все поля!')
     }
 
     const course = await Course.find({ _id: id, rating: { $elemMatch: { user: req.user._id } } })

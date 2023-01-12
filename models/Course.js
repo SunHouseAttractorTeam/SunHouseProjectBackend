@@ -49,11 +49,19 @@ const RatingSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-  value: {
+  rating: {
     type: Number,
     min: 0,
     max: 5,
   },
+  instagram: {
+    type: String,
+    required: true
+  },
+  review: {
+    type: String,
+    required: true
+  }
 })
 
 const CourseSchema = new Schema({
