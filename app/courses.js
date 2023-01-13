@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
     const course = await Course.findOne({ _id: id })
       .populate('users', 'username')
       .populate('modules', 'title data')
-      .populate('teachers.user', 'username avatar')
+      .populate('lendingTeachers.user', 'username avatar')
     return res.send(course)
   }
 
@@ -286,17 +286,45 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
   }
 })
 
-router.patch('/:id/visible', auth, searchAccesser, async (req, res) => {
+router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async (req, res) => {
   try {
-    const { content } = req.query
+    const files = [...req.files]
+    const parsedData = { ...JSON.parse(req.body.payload) }
 
-    if (!content) {
-      return res.status(400).send({ error: 'Нету айди контента!' })
-    }
+    const willLearn = parsedData.willLearn.map(item => {
+      if (files.length) {
+        if (item.image) {
+          item.image = `uploads/${files[0].filename}`
+          files.splice(0, 1)
+        }
+      }
 
-    const courseContent = await Course.findByIdAndUpdate(req.params.id, { [content]: ![content] }, { new: true })
+      return item
+    })
+    const usersEmail = parsedData.lendingTeachers.map(teacher => teacher.email)
+    const users = await User.find({ email: usersEmail }, { _id: 1, email: 1 })
 
-    return res.send(courseContent)
+    const newUsers = []
+    users.forEach(user => {
+      parsedData.lendingTeachers.forEach(teacher => {
+        if (user.email === teacher.email) {
+          newUsers.push({ user: user._id, description: teacher.description })
+        }
+      })
+    })
+
+    await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        blockModules: parsedData.blockModules,
+        blockTeachers: parsedData.blockTeachers,
+        blockLearn: parsedData.blockLearn,
+        $push: { willLearn: { $each: willLearn }, lendingTeachers: { $each: newUsers } },
+      },
+      { new: true },
+    )
+
+    return res.send({ message: 'Данные успешно сохранены' })
   } catch (e) {
     return res.status(500).send({ error: e })
   }

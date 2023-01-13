@@ -36,6 +36,15 @@ const CourseSchema = new Schema({
   rating: [RatingSchema],
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  lendingTeachers: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      description: String,
+    },
+  ],
   modules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Module' }],
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -67,17 +76,26 @@ const CourseSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  visibilityModules: {
-    type: Boolean,
-    default: true,
+  blockModules: {
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    description: { type: String, default: '' },
   },
-  visibilityTeachers: {
-    type: Boolean,
-    default: true,
+  blockTeachers: {
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    description: { type: String, default: '' },
   },
-  visibilityWillLearn: {
-    type: Boolean,
-    default: true,
+  blockLearn: {
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    description: { type: String, default: '' },
   },
   private: {
     type: Boolean,
