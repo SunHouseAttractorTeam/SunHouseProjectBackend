@@ -19,7 +19,13 @@ router.get('/', async (req, res) => {
       .populate('users', 'username')
       .populate('modules', 'title data')
       .populate('lendingTeachers.user', 'username avatar')
-    return res.send(course)
+    const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
+
+    const data = { ...course }
+    const newCourse = { ...data._doc }
+
+    newCourse.searchTeachers = teachers.teachers
+    return res.send(newCourse)
   }
 
   const query = {}
@@ -293,7 +299,7 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
 
     const willLearn = parsedData.willLearn.map(item => {
       if (files.length) {
-        if (item.image) {
+        if (item.image && typeof item.image !== 'string') {
           item.image = `uploads/${files[0].filename}`
           files.splice(0, 1)
         }
@@ -301,28 +307,14 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
 
       return item
     })
-    const usersEmail = parsedData.lendingTeachers.map(teacher => teacher.email)
-    const users = await User.find({ email: usersEmail }, { _id: 1, email: 1 })
 
-    const newUsers = []
-    users.forEach(user => {
-      parsedData.lendingTeachers.forEach(teacher => {
-        if (user.email === teacher.email) {
-          newUsers.push({ user: user._id, description: teacher.description })
-        }
-      })
+    await Course.findByIdAndUpdate(req.params.id, {
+      blockModules: parsedData.blockModules,
+      blockTeachers: parsedData.blockTeachers,
+      blockLearn: parsedData.blockLearn,
+      willLearn,
+      lendingTeachers: parsedData.lendingTeachers,
     })
-
-    await Course.findByIdAndUpdate(
-      req.params.id,
-      {
-        blockModules: parsedData.blockModules,
-        blockTeachers: parsedData.blockTeachers,
-        blockLearn: parsedData.blockLearn,
-        $push: { willLearn: { $each: willLearn }, lendingTeachers: { $each: newUsers } },
-      },
-      { new: true },
-    )
 
     return res.send({ message: 'Данные успешно сохранены' })
   } catch (e) {
