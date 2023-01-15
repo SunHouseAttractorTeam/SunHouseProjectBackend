@@ -12,7 +12,7 @@ const searchAccesser = require('../middleweare/searchAccesser')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
-  const { id } = req.query
+  const { id, userId, teacherId } = req.query
 
   if (id) {
     const course = await Course.findOne({ _id: id })
@@ -26,6 +26,26 @@ router.get('/', async (req, res) => {
 
     newCourse.searchTeachers = teachers.teachers
     return res.send(newCourse)
+  }
+
+  if (userId) {
+    const user = await User.findById(userId)
+
+    if (!user) return res.status(404).send('Пользователь не найден')
+
+    const courses = await Course.find({ users: user._id })
+
+    return res.send(courses)
+  }
+
+  if (teacherId) {
+    const teacher = await User.findById(teacherId)
+
+    if (!teacher) return res.status(404).send('Пользователь не найден')
+
+    const courses = await Course.find({ teachers: teacher._id })
+
+    return res.send(courses)
   }
 
   const query = {}
