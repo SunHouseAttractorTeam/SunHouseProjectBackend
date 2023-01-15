@@ -297,6 +297,7 @@ router.put('/add_course', auth, async (req, res) => {
 router.patch('/:id/update_status', auth, async (req, res) => {
   const userId = req.params.id
   const contentId = req.query.content
+  const { choice } = req.query
 
   try {
     const user = await User.findById(req.user._id)
@@ -360,20 +361,67 @@ router.patch('/:id/update_status', auth, async (req, res) => {
           return res.status(403).send({ message: "User don't have permission" })
         }
 
+        let passed = 'rejected'
+        let message = 'Студент не прошёл'
+        if (choice === 'true') {
+          passed = 'success'
+          message = 'Студент прошёл'
+        }
+
         await User.updateOne(
           {
             _id: userId,
             'tasks.task': contentId,
           },
-          { $set: { 'tasks.$.status': true } },
+          { $set: { 'tasks.$.status': choice, 'tasks.$.passed': passed } },
         )
-        return res.send({ message: 'Студент прошёл' })
+
+        await Course.updateOne(
+          { _id: req.query.course },
+          { $pull: { pendingTasks: { user: userId, task: contentId } } },
+        )
+
+        return res.send({ message })
       }
       default:
         return res.send({ message: 'Контент не найден!' })
     }
   } catch (e) {
     return res.status(500)
+  }
+})
+
+router.put('/add_task', auth, upload.single('file'), async (req, res) => {
+  try {
+    const { task, course } = req.query
+
+    let file
+    if (req.file) {
+      file = `uploads/${req.file.filename}`
+    }
+
+    const user = await User.findOneAndUpdate(
+      { _id: req.user._id, 'tasks.task': task },
+      { $set: { 'tasks.$.file': file, 'tasks.$.passed': 'pending' } },
+      { new: true },
+    )
+
+    await Course.findOneAndUpdate(
+      { _id: course },
+      {
+        $push: {
+          pendingTasks: {
+            user: user._id,
+            file,
+            task,
+          },
+        },
+      },
+    )
+
+    return res.send({ message: 'Задание отправлено!' })
+  } catch (e) {
+    return res.status(500).send(e)
   }
 })
 

@@ -12,7 +12,24 @@ const searchAccesser = require('../middleweare/searchAccesser')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
+  const { id } = req.query
+
+  if (id) {
+    const course = await Course.findOne({ _id: id })
+      .populate('users', 'username')
+      .populate('modules', 'title data')
+      .populate('lendingTeachers.user', 'username avatar')
+    const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
+
+    const data = { ...course }
+    const newCourse = { ...data._doc }
+
+    newCourse.searchTeachers = teachers.teachers
+    return res.send(newCourse)
+  }
+
   const query = {}
+
   if (req.query.category) query.category = req.query.category
   try {
     const courses = await Course.find(query).sort({ dateTime: 1 }).populate({
@@ -25,17 +42,85 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.get('/:id', async (req, res) => {
+router.get('/:id/course', auth, searchAccesser, async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id).populate('modules')
+    const userId = req.query.user
 
-    if (!course) {
-      return res.status(404).send({ message: 'Такого курса нет!' })
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).send({ error: 'Пользователь не найден!' })
     }
 
-    return res.send(course)
+    const course = await Course.findOne({ _id: req.params.id }, { modules: 1 }).populate('modules')
+    const lessonsId = []
+    const testsId = []
+    const tasksId = []
+
+    if (course.modules.length !== 0) {
+      course.modules.forEach(module => {
+        if (module.data.length !== 0) {
+          module.data.forEach(content => {
+            if (content.type === 'lesson') {
+              lessonsId.push(content._id)
+            }
+            if (content.type === 'test') {
+              testsId.push(content._id)
+            }
+            if (content.type === 'task') {
+              tasksId.push(content._id)
+            }
+          })
+        }
+      })
+    }
+
+    const userPassedTests = []
+    const userPassedContent = []
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of testsId) {
+      // eslint-disable-next-line no-await-in-loop
+      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } })
+
+      if (userTest.tests.length !== 0) {
+        if (userTest.tests[0].status === true) {
+          userPassedContent.push(userTest.tests[0])
+        }
+        userPassedTests.push(userTest.tests[0])
+      }
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of lessonsId) {
+      // eslint-disable-next-line no-await-in-loop
+      const userLesson = await User.findOne({ _id: userId }, { lessons: { $elemMatch: { lesson: id, status: true } } })
+
+      if (userLesson.lessons.length !== 0) {
+        userPassedContent.push(userLesson.lessons[0])
+      }
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of tasksId) {
+      // eslint-disable-next-line no-await-in-loop
+      const userTask = await User.findOne({ _id: userId }, { tasks: { $elemMatch: { task: id, status: true } } })
+
+      if (userTask.tasks.length !== 0) {
+        userPassedContent.push(userTask.tasks[0])
+      }
+    }
+
+    const coursePercent = (userPassedContent.length / (lessonsId.length + testsId.length + tasksId.length)) * 100
+    const userData = {
+      coursePercent,
+      avatar: user.avatar,
+      username: user.username,
+      name: user.name,
+      email: user.email,
+      tests: userPassedTests,
+    }
+
+    return res.send(userData)
   } catch (e) {
-    return res.sendStatus(500)
+    return res.status(500).send(e)
   }
 })
 
@@ -157,7 +242,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 
 // Добавление рейтинга
 
-router.put('/', auth, async (req, res) => {
+router.post('/rating_course', auth, async (req, res) => {
   try {
     const { id, rating } = req.body
     if (!rating) {
@@ -167,15 +252,15 @@ router.put('/', auth, async (req, res) => {
     const course = await Course.find({ _id: id, rating: { $elemMatch: { user: req.user._id } } })
 
     if (course.length === 0) {
-      const newRating = { rating, user: req.user._id }
+      const newRating = { value: rating, user: req.user._id }
       await Course.updateOne({ _id: id }, { $push: { rating: newRating } })
     } else {
-      await Course.updateOne({ _id: id, 'rating.user': req.user._id }, { $set: { 'rating.$.rating': rating } })
+      await Course.updateOne({ _id: id, 'rating.user': req.user._id }, { $set: { 'rating.$.value': rating } })
     }
 
     const updatedRating = await Course.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(id) } },
-      { $addFields: { ratingAverage: { $avg: '$rating.rating' } } },
+      { $addFields: { ratingAverage: { $avg: '$rating.value' } } },
     ])
 
     return res.send(updatedRating[0])
@@ -189,7 +274,7 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
     const id = req.query.course
 
     let image
-    if (!req.file) {
+    if (req.file) {
       image = `uploads/${req.file.filename}`
     }
 
@@ -204,6 +289,36 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
     return res.send({ message: 'Картинка успешно сменен!' })
   } catch (e) {
     return res.sendStatus(500)
+  }
+})
+
+router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async (req, res) => {
+  try {
+    const files = [...req.files]
+    const parsedData = { ...JSON.parse(req.body.payload) }
+
+    const willLearn = parsedData.willLearn.map(item => {
+      if (files.length) {
+        if (item.image && typeof item.image !== 'string') {
+          item.image = `uploads/${files[0].filename}`
+          files.splice(0, 1)
+        }
+      }
+
+      return item
+    })
+
+    await Course.findByIdAndUpdate(req.params.id, {
+      blockModules: parsedData.blockModules,
+      blockTeachers: parsedData.blockTeachers,
+      blockLearn: parsedData.blockLearn,
+      willLearn,
+      lendingTeachers: parsedData.lendingTeachers,
+    })
+
+    return res.send({ message: 'Данные успешно сохранены' })
+  } catch (e) {
+    return res.status(500).send({ error: e })
   }
 })
 
