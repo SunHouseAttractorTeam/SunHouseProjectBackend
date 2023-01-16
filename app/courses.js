@@ -19,6 +19,8 @@ router.get('/', async (req, res) => {
       .populate('users', 'username')
       .populate('modules', 'title data')
       .populate('lendingTeachers.user', 'username avatar')
+      .populate('pendingTasks.user', 'username email')
+      .populate('pendingTasks.task', 'title')
     const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
 
     const data = { ...course }
