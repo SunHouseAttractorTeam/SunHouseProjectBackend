@@ -12,7 +12,7 @@ const searchAccesser = require('../middleweare/searchAccesser')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
-  const { id } = req.query
+  const { id, userId, teacherId } = req.query
 
   if (id) {
     const course = await Course.findOne({ _id: id })
@@ -26,6 +26,26 @@ router.get('/', async (req, res) => {
 
     newCourse.searchTeachers = teachers.teachers
     return res.send(newCourse)
+  }
+
+  if (userId) {
+    const user = await User.findById(userId)
+
+    if (!user) return res.status(404).send('Пользователь не найден')
+
+    const courses = await Course.find({ users: user._id })
+
+    return res.send(courses)
+  }
+
+  if (teacherId) {
+    const teacher = await User.findById(teacherId)
+
+    if (!teacher) return res.status(404).send('Пользователь не найден')
+
+    const courses = await Course.find({ teachers: teacher._id })
+
+    return res.send(courses)
   }
 
   const query = {}
@@ -152,41 +172,40 @@ router.post('/', auth, async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add', auth, async (req, res) => {
+router.put('/:id/add', auth, async (req, res) => {
   let user = null
-  const userId = req.query.user
-  const ownerId = req.query.owner
-  const courseID = req.query.course
+  const { userId, teacherId } = req.query
+  const courseId = req.params.id
 
   try {
     if (userId) {
       user = await User.findById(userId)
     }
-    if (ownerId) {
-      user = await User.findById(ownerId)
+    if (teacherId) {
+      user = await User.findById(teacherId)
     }
     if (!user) {
       return res.status(404).send({ message: 'Такого пользователя нет!' })
     }
-    const course = await Course.findById(courseID)
+    const course = await Course.findById(courseId)
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
     }
     if (userId) {
       if (!course.users.includes(userId)) {
-        const addUsers = await Course.findByIdAndUpdate(courseID, { $push: { users: user } })
+        const addUsers = await Course.findByIdAndUpdate(courseId, { $push: { users: user._id } })
         return res.send(addUsers)
       }
     }
-    if (ownerId) {
-      if (!course.teachers.includes(ownerId)) {
-        const addOwners = await Course.findByIdAndUpdate(courseID, { $push: { owners: user } })
-        return res.send(addOwners)
+    if (teacherId) {
+      if (!course.teachers.includes(teacherId)) {
+        const addTeachers = await Course.findByIdAndUpdate(courseId, { $push: { teachers: user } })
+        return res.send(addTeachers)
       }
     }
     return res.send(course)
   } catch (e) {
-    return res.sendStatus(500)
+    return res.status(500).send(e)
   }
 })
 
@@ -204,9 +223,9 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
     }
     course.publish = !course.publish
     await course.save()
-    res.send(course)
+    return res.send(course)
   } catch (e) {
-    res.status(400).send({ error: e.errors })
+    return res.status(400).send({ error: e.errors })
   }
 })
 

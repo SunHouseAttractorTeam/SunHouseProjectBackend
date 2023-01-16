@@ -7,29 +7,7 @@ const Module = require('../models/Module')
 const Course = require('../models/Course')
 
 const auth = require('../middleweare/auth')
-const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
-
-router.get('/', auth, async (req, res) => {
-  try {
-    const modules = await Module.find()
-
-    return res.send(modules)
-  } catch (e) {
-    return res.status(500).send({ error: e.message })
-  }
-})
-
-router.get('/:id', auth, async (req, res) => {
-  const { id } = req.params
-  try {
-    const modules = await Module.findById(id)
-
-    return res.send(modules)
-  } catch (e) {
-    return res.status(500).send({ error: e.message })
-  }
-})
 
 router.post('/', auth, searchAccesser, async (req, res) => {
   try {
