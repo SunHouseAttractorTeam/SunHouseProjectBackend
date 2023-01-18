@@ -6,62 +6,22 @@ const Test = require('./Test')
 
 const { Schema } = mongoose
 
-const WillLearnSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    default: 'чему вы научитесь',
-  },
-  visibility: {
-    type: Boolean,
-    default: true,
-  },
-  data: [
-    {
-      title: {
-        type: String,
-        required: true,
-      },
-      image: String,
-      description: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
-})
-
-const teachersBlockSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    default: 'преподаватели',
-  },
-  visibility: {
-    type: Boolean,
-    default: true,
-  },
-  data: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-})
-
 const RatingSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-  rating: {
+  value: {
     type: Number,
     min: 0,
     max: 5,
   },
   instagram: {
     type: String,
-    required: true
   },
   review: {
     type: String,
-    required: true
-  }
+  },
 })
 
 const CourseSchema = new Schema({
@@ -76,14 +36,34 @@ const CourseSchema = new Schema({
   rating: [RatingSchema],
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  lendingTeachers: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      description: String,
+    },
+  ],
   modules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Module' }],
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
     required: { message: 'Выберете категорю' },
   },
-  WillLearn: WillLearnSchema,
-  teachersBlock: teachersBlockSchema,
+  willLearn: [
+    {
+      title: {
+        type: String,
+        required: true,
+      },
+      image: String,
+      description: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
   price: {
     type: Number,
     min: 0,
@@ -96,9 +76,26 @@ const CourseSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  visibilityModules: {
-    type: Boolean,
-    default: true,
+  blockModules: {
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    description: { type: String, default: '' },
+  },
+  blockTeachers: {
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    description: { type: String, default: '' },
+  },
+  blockLearn: {
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    description: { type: String, default: '' },
   },
   private: {
     type: Boolean,
@@ -107,6 +104,13 @@ const CourseSchema = new Schema({
   description: String,
   image: String,
   headerImage: String,
+  pendingTasks: [
+    {
+      user: { type: Schema.Types.ObjectId, ref: 'User' },
+      file: String,
+      task: { type: Schema.Types.ObjectId, ref: 'Task' },
+    },
+  ],
 })
 
 CourseSchema.pre('deleteOne', async function (next) {

@@ -191,7 +191,11 @@ router.patch('/:id', auth, async (req, res) => {
           user.tests = await Promise.all(
             user.tests.map(testObj => {
               if (testObj.test.equals(testId)) {
-                return testObj.answers.push({ question: userQuestion.question, status: answer })
+                return testObj.answers.push({
+                  questionId: userQuestion.question,
+                  question: obj.questions[0].title,
+                  status: answer,
+                })
               }
               return testObj
             }),
@@ -212,7 +216,7 @@ router.patch('/:id', auth, async (req, res) => {
     user.tests = await Promise.all(
       user.tests.map(testObj => {
         // eslint-disable-next-line no-return-assign
-        if (testObj.test.equals(testId)) return (testObj.condition = true)
+        if (testObj.test.equals(testId)) return (testObj.status = true)
         return testObj
       }),
     )

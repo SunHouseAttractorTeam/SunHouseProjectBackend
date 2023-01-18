@@ -185,6 +185,30 @@ const run = async () => {
         { user, value: 3 },
       ],
       teachers: [teacher, tom],
+      lendingTeachers: [
+        { user: teacher },
+        {
+          user: tom,
+          description: 'Руководитель правовой практики в сфере ПО, технологий, сделок с брендом и данными ЯНДЕКС',
+        },
+      ],
+      willLearn: [
+        {
+          title: 'test',
+          image: 'fixtures/user.jpg',
+          description:
+            'Часто в текстах и обучающих материалах название языка сокращают до JS.' +
+            'Это язык программирования высокого уровня, то есть код на нем понятный и хорошо читается.',
+        },
+        {
+          title: 'task',
+          description: 'Часто в текстах',
+        },
+        {
+          title: 'lesson',
+          description: 'Часто в текстах и обучающих материалах название языка сокращают до JS.',
+        },
+      ],
       users: [user],
     },
     {
@@ -199,6 +223,24 @@ const run = async () => {
         { user, value: 5 },
       ],
       teachers: [teacher],
+      lendingTeachers: [{ user: teacher }],
+      willLearn: [
+        {
+          title: 'test',
+          image: 'fixtures/user.jpg',
+          description:
+            'Часто в текстах и обучающих материалах название языка сокращают до JS.' +
+            'Это язык программирования высокого уровня, то есть код на нем понятный и хорошо читается.',
+        },
+        {
+          title: 'task',
+          description: 'Часто в текстах',
+        },
+        {
+          title: 'lesson',
+          description: 'Часто в текстах и обучающих материалах название языка сокращают до JS.',
+        },
+      ],
       users: [user, tom],
       category: frontendDev._id,
       price: 10000,
@@ -217,6 +259,24 @@ const run = async () => {
         { user, value: 5 },
       ],
       teachers: [teacher],
+      lendingTeachers: [{ user: teacher }],
+      willLearn: [
+        {
+          title: 'test',
+          image: 'fixtures/user.jpg',
+          description:
+            'Часто в текстах и обучающих материалах название языка сокращают до JS.' +
+            'Это язык программирования высокого уровня, то есть код на нем понятный и хорошо читается.',
+        },
+        {
+          title: 'task',
+          description: 'Часто в текстах',
+        },
+        {
+          title: 'lesson',
+          description: 'Часто в текстах и обучающих материалах название языка сокращают до JS.',
+        },
+      ],
       users: [user],
       publish: true,
     },
@@ -233,6 +293,24 @@ const run = async () => {
         { user: tom, value: 2 },
       ],
       teachers: [teacher, admin],
+      lendingTeachers: [{ user: teacher }, { user: admin, description: 'Admin ADmin aDmin' }],
+      willLearn: [
+        {
+          title: 'test',
+          image: 'fixtures/user.jpg',
+          description:
+            'Часто в текстах и обучающих материалах название языка сокращают до JS.' +
+            'Это язык программирования высокого уровня, то есть код на нем понятный и хорошо читается.',
+        },
+        {
+          title: 'task',
+          description: 'Часто в текстах',
+        },
+        {
+          title: 'lesson',
+          description: 'Часто в текстах и обучающих материалах название языка сокращают до JS.',
+        },
+      ],
       users: [user, tom],
       publish: true,
     },
@@ -244,6 +322,24 @@ const run = async () => {
       price: 15500,
       dateTime: dayjs().format('DD/MM/YYYY'),
       teachers: [admin],
+      lendingTeachers: [{ user: admin }],
+      willLearn: [
+        {
+          title: 'test',
+          image: 'fixtures/user.jpg',
+          description:
+            'Часто в текстах и обучающих материалах название языка сокращают до JS.' +
+            'Это язык программирования высокого уровня, то есть код на нем понятный и хорошо читается.',
+        },
+        {
+          title: 'task',
+          description: 'Часто в текстах',
+        },
+        {
+          title: 'lesson',
+          description: 'Часто в текстах и обучающих материалах название языка сокращают до JS.',
+        },
+      ],
       publish: true,
     },
   )

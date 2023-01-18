@@ -20,7 +20,7 @@ const validateEmail = value => {
 
 const MyCourses = new Schema({
   course: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Course',
   },
   status: {
@@ -31,18 +31,19 @@ const MyCourses = new Schema({
 
 const Tests = new Schema({
   test: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Test',
   },
   status: {
     type: Boolean,
     default: false,
   },
+  answers: [],
 })
 
 const Lessons = new Schema({
   lesson: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Lesson',
   },
   status: {
@@ -53,13 +54,20 @@ const Lessons = new Schema({
 
 const Tasks = new Schema({
   task: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Lesson',
   },
   status: {
     type: Boolean,
     default: false,
   },
+  passed: {
+    type: String,
+    required: true,
+    default: 'null',
+    enum: ['null', 'rejected', 'pending', 'success'],
+  },
+  file: String,
 })
 
 const UserSchema = new Schema({
