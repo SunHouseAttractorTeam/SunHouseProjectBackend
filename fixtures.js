@@ -543,6 +543,35 @@ const run = async () => {
     },
   })
 
+  await tom.updateOne({
+    $push: {
+      tests: {
+        test: test2,
+        status: true,
+        answers: [{ questionId: test2.questions[0]._id, question: test1.questions[0].title, answer: true }],
+      },
+    },
+  })
+
+  await tom.updateOne({
+    $push: {
+      tests: {
+        test: test3,
+        status: true,
+        answers: [{ questionId: test3.questions[0]._id, question: test1.questions[0].title, answer: true }],
+      },
+    },
+  })
+
+  await user.updateOne({
+    $push: {
+      tests: {
+        test: test3,
+        status: true,
+        answers: [{ questionId: test3.questions[0]._id, question: test1.questions[0].title, answer: true }],
+      },
+    },
+  })
   await Review.create(
     {
       name: 'Биба',
