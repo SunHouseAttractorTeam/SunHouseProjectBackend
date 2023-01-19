@@ -2,12 +2,14 @@ const express = require('express')
 
 const dayjs = require('dayjs')
 const mongoose = require('mongoose')
+const fs = require('fs')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
+const config = require('../config')
 
 const router = express.Router()
 
@@ -252,7 +254,24 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
     }
-    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData)
+    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true })
+
+    if (course.image && course.image !== updateCourse.image) {
+      const oldImage = course.image.split('/')
+
+      if (oldImage[0] === 'uploads') {
+        // eslint-disable-next-line node/prefer-promises/fs
+        fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          console.log('Delete File successfully.')
+        })
+      }
+    }
+
     return res.send(updateCourse)
   } catch (e) {
     return res.sendStatus(500)
@@ -303,7 +322,23 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
       return res.status(404).send({ message: 'Курс не найден!' })
     }
 
-    await Course.findByIdAndUpdate(id, { headerImage: image })
+    const updateCourse = await Course.findByIdAndUpdate(id, { headerImage: image }, { new: true })
+
+    if (course.headerImage && course.headerImage !== updateCourse.headerImage) {
+      const oldImage = course.headerImage.split('/')
+
+      if (oldImage[0] === 'uploads') {
+        // eslint-disable-next-line node/prefer-promises/fs
+        fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          console.log('Delete File successfully.')
+        })
+      }
+    }
 
     return res.send({ message: 'Картинка успешно сменен!' })
   } catch (e) {
@@ -327,13 +362,67 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
       return item
     })
 
-    await Course.findByIdAndUpdate(req.params.id, {
-      blockModules: parsedData.blockModules,
-      blockTeachers: parsedData.blockTeachers,
-      blockLearn: parsedData.blockLearn,
-      willLearn,
-      lendingTeachers: parsedData.lendingTeachers,
-    })
+    const course = await Course.findById(req.params.id)
+
+    if (!course) {
+      return res.status(404).send({ message: 'Курс не найден!' })
+    }
+
+    const updateCourse = await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        blockModules: parsedData.blockModules,
+        blockTeachers: parsedData.blockTeachers,
+        blockLearn: parsedData.blockLearn,
+        willLearn,
+        lendingTeachers: parsedData.lendingTeachers,
+      },
+      { new: true },
+    )
+
+    if (course.willLearn.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const obj of course.willLearn) {
+        if (obj.image) {
+          if (updateCourse.willLearn.length === 0) {
+            const oldImage = obj.image.split('/')
+            if (oldImage[0] === 'uploads') {
+              // eslint-disable-next-line node/prefer-promises/fs
+              fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
+                if (err) {
+                  console.log(err)
+                  return
+                }
+
+                console.log('Delete File successfully.')
+              })
+            }
+          }
+
+          if (updateCourse.willLearn.length !== 0) {
+            for (let i = 0; i < updateCourse.willLearn.length; i += 1) {
+              if (obj.image === updateCourse.willLearn[i].image) {
+                break
+              }
+
+              const last = i + 2
+              if (last > updateCourse.willLearn.length) {
+                const oldImage = obj.image.split('/')
+                // eslint-disable-next-line node/prefer-promises/fs
+                fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
+                  if (err) {
+                    console.log(err)
+                    return
+                  }
+
+                  console.log('Delete File successfully.')
+                })
+              }
+            }
+          }
+        }
+      }
+    }
 
     return res.send({ message: 'Данные успешно сохранены' })
   } catch (e) {

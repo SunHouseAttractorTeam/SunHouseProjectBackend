@@ -1,4 +1,5 @@
 const express = require('express')
+const fs = require('fs')
 const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
@@ -400,6 +401,8 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
       file = `uploads/${req.file.filename}`
     }
 
+    const oldFile = await User.findOne({ _id: req.user._id }, { tasks: { $elemMatch: { task } } })
+
     const user = await User.findOneAndUpdate(
       { _id: req.user._id, 'tasks.task': task },
       { $set: { 'tasks.$.file': file, 'tasks.$.passed': 'pending' } },
@@ -419,7 +422,23 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
       },
     )
 
-    return res.send({ message: 'Задание отправлено!' })
+    if (oldFile.tasks[0].file) {
+      const array = oldFile.tasks[0].file.split('/')
+
+      if (array[0] === 'uploads') {
+        // eslint-disable-next-line node/prefer-promises/fs
+        fs.unlink(`${config.uploadPath}/${array[1]}`, err => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          console.log('Delete File successfully.')
+        })
+      }
+    }
+
+    return res.send(user)
   } catch (e) {
     return res.status(500).send(e)
   }
@@ -471,13 +490,11 @@ router.post('/forgot', async (req, res) => {
 
 router.post('/reset', async (req, res) => {
   try {
-    console.log(req.body)
     const user = await User.findOne({ resetPasswordToken: req.body.hash.hash })
 
     user.resetPasswordToken = ''
     user.resetPasswordExpires = Date.now() + 360000
 
-    console.log(req.body.hash.newPassword)
     user.password = req.body.hash.newPassword
 
     await user.save({ validateBeforeSave: false })
@@ -503,6 +520,22 @@ router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, userData, { new: true })
+
+    if (req.user.avatar !== user.avatar) {
+      const avatar = req.user.avatar.split('/')
+
+      if (avatar[0] === 'uploads') {
+        // eslint-disable-next-line node/prefer-promises/fs
+        fs.unlink(`${config.uploadPath}/${avatar[1]}`, err => {
+          if (err) {
+            console.log(err)
+            return
+          }
+
+          console.log('Delete File successfully.')
+        })
+      }
+    }
 
     return res.send(user)
   } catch (e) {
