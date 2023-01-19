@@ -262,6 +262,9 @@ router.put('/add_course', auth, async (req, res) => {
       return res.status(400).send({ message: 'Пользователь уже подписан на этот курс' })
     }
 
+    course.users.push(userId)
+    await course.save()
+
     await User.findByIdAndUpdate(userId, { $push: { myCourses: { course } } })
 
     const modulesId = await Module.distinct('_id', { course: courseId })
