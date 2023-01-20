@@ -314,44 +314,63 @@ router.patch('/:id/update_status', auth, async (req, res) => {
         if (!course) {
           return res.status(404).send({ message: 'Course not found!' })
         }
-        await User.updateOne(
+        const newUser = await User.findOneAndUpdate(
           {
             _id: userId,
             'myCourses.course': contentId,
           },
           { $set: { 'myCourses.$.status': true } },
+          { new: true },
         )
-        return res.send({ message: 'Студент прошёл' })
+        return res.send(newUser)
       }
       case 'test': {
         const test = await Test.findById(contentId)
         if (!test) {
           return res.status(404).send({ message: 'Test not found!' })
         }
-        await User.updateOne(
+        const newUser = await User.findOneAndUpdate(
           {
             _id: userId,
             'tests.test': contentId,
           },
-          { $set: { 'tests.$.status': true } },
+          { $set: { 'tests.$.test': true } },
+          { new: true },
         )
-        return res.send({ message: 'Студент прошёл' })
+        return res.send(newUser)
       }
       case 'lesson': {
         const lesson = await Lesson.findById(contentId)
         if (!lesson) {
           return res.status(404).send({ message: 'Lesson not found!' })
         }
-        await User.updateOne(
+        const newUser = await User.findOneAndUpdate(
           {
             _id: userId,
             'lessons.lesson': contentId,
           },
           { $set: { 'lessons.$.status': true } },
+          { new: true },
         )
-        return res.send({ message: 'Студент прошёл' })
+        return res.send(newUser)
       }
       case 'task': {
+        const task = await Task.findById(contentId)
+        if (!task) {
+          return res.status(404).send({ message: 'Task not found!' })
+        }
+
+        const newUser = await User.findOneAndUpdate(
+          {
+            _id: userId,
+            'tasks.task': contentId,
+          },
+          { $set: { 'tasks.$.task': true } },
+          { new: true },
+        )
+        return res.send(newUser)
+      }
+      case 'passed': {
         const task = await Task.findById(contentId)
         if (!task) {
           return res.status(404).send({ message: 'Task not found!' })
