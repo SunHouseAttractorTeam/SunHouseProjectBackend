@@ -2,14 +2,14 @@ const express = require('express')
 const upload = require('../middleweare/upload')
 const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
-const Review = require('../models/LendingReview')
+const Teachers = require('../models/LendingTeachers')
 
 const router = express.Router()
 
 router.get('/', async (req, res) => {
   try {
-    const review = await Review.find()
-    return res.send(review)
+    const teachers = await Teachers.find()
+    return res.send(teachers)
   } catch (e) {
     return res.status(500).send({ error: e.message })
   }
@@ -17,25 +17,24 @@ router.get('/', async (req, res) => {
 
 router.post('/', auth, permit('admin'), upload.single('image'), async (req, res) => {
   try {
-    const { name, socialNetwork, description } = req.body
-    if (!name || !socialNetwork || !description) {
+    const { name, description } = req.body
+    if (!name || !description) {
       return res.status(400).send({
         message: 'Введенные данные не верны!',
       })
     }
-    const reviewData = {
+    const teachersData = {
       name,
       description,
-      socialNetwork,
       image: null,
     }
     if (req.file) {
-      reviewData.image = `uploads/${req.file.filename}`
+      teachersData.image = `uploads/${req.file.filename}`
     }
 
-    const review = new Review(reviewData)
-    await review.save()
-    return res.send(review)
+    const teachers = new Teachers(teachersData)
+    await teachers.save()
+    return res.send(teachers)
   } catch (e) {
     console.log(e)
     return res.status(500).send({ error: e.message })
@@ -44,15 +43,15 @@ router.post('/', auth, permit('admin'), upload.single('image'), async (req, res)
 
 router.delete('/:id', auth, permit('admin'), async (req, res) => {
   try {
-    const review = await Review.findById(req.params.id)
+    const teachers = await Teachers.findById(req.params.id)
 
-    if (!review) {
-      return res.status(404).send({ message: 'Review not found!' })
+    if (!teachers) {
+      return res.status(404).send({ message: 'Препод не найден!' })
     }
 
-    const deleteReview = await Review.findByIdAndDelete({ _id: req.params.id })
+    const deleteTeacher = await Teachers.findByIdAndDelete({ _id: req.params.id })
 
-    return res.send(deleteReview)
+    return res.send(deleteTeacher)
   } catch (e) {
     return res.status(500).send({ error: e.message })
   }

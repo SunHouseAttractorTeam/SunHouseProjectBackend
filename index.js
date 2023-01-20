@@ -15,6 +15,7 @@ const lessons = require('./app/lessons')
 const tests = require('./app/tests')
 const modules = require('./app/modules')
 const lendingReviews = require('./app/lendingReviews')
+const lendingTeachers = require('./app/lendingTeachers')
 
 const app = express()
 const port = 8000
@@ -39,6 +40,7 @@ app.use('/tasks', tasks)
 app.use('/tests', tests)
 app.use('/modules', modules)
 app.use('/lending_reviews', lendingReviews)
+app.use('/lending_teachers', lendingTeachers)
 
 const run = async () => {
   await mongoose.connect(config.mongo.db, config.mongo.options)
