@@ -1,11 +1,11 @@
 const express = require('express')
-
 const Test = require('../models/Test')
 const Module = require('../models/Module')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
 const upload = require('../middleweare/upload')
+const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -156,6 +156,14 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       )
 
       await module.save()
+    }
+
+    if (test.file !== updateTest.file) {
+      deleteFile(test.file)
+    }
+
+    if (test.data.length !== 0) {
+      clearArrayFromFiles(test.data, updateTest.data)
     }
 
     return res.send(updateTest)

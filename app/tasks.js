@@ -4,6 +4,7 @@ const Task = require('../models/Task')
 const Module = require('../models/Module')
 const upload = require('../middleweare/upload')
 const searchAccesser = require('../middleweare/searchAccesser')
+const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -137,6 +138,14 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
         }),
       )
       await module.save()
+    }
+
+    if (task.file !== updateTask.file) {
+      deleteFile(task.file)
+    }
+
+    if (task.data.length !== 0) {
+      clearArrayFromFiles(task.data, updateTask.data)
     }
 
     return res.send(updateTask)

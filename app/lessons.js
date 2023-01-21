@@ -2,9 +2,9 @@ const express = require('express')
 const auth = require('../middleweare/auth')
 const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
-const Course = require('../models/Course')
 const searchAccesser = require('../middleweare/searchAccesser')
 const upload = require('../middleweare/upload')
+const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -141,6 +141,14 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
         }),
       )
       await module.save()
+    }
+
+    if (lesson.file !== updateLesson.file) {
+      deleteFile(lesson.file)
+    }
+
+    if (lesson.data.length !== 0) {
+      clearArrayFromFiles(lesson.data, updateLesson.data)
     }
 
     return res.send(updateLesson)

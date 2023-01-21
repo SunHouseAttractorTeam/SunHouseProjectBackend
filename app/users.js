@@ -1,5 +1,4 @@
 const express = require('express')
-const fs = require('fs')
 const axios = require('axios')
 const { nanoid } = require('nanoid')
 const { VKAPI } = require('vkontakte-api')
@@ -21,6 +20,7 @@ const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
 const Module = require('../models/Module')
 const config = require('../config')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -401,7 +401,7 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
 
     let file
     if (req.file) {
-      file = `uploads/${req.file.filename}`
+      file = req.file.filename
     }
 
     const oldFile = await User.findOne({ _id: req.user._id }, { tasks: { $elemMatch: { task } } })
@@ -426,19 +426,7 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
     )
 
     if (oldFile.tasks[0].file) {
-      const array = oldFile.tasks[0].file.split('/')
-
-      if (array[0] === 'uploads') {
-        // eslint-disable-next-line node/prefer-promises/fs
-        fs.unlink(`${config.uploadPath}/${array[1]}`, err => {
-          if (err) {
-            console.log(err)
-            return
-          }
-
-          console.log('Delete File successfully.')
-        })
-      }
+      deleteFile(oldFile.tasks[0].file)
     }
 
     return res.send(user)
@@ -512,32 +500,29 @@ router.post('/reset', async (req, res) => {
 
 router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
   try {
-    const userData = req.body
+    console.log(req.body)
+    const userData = {
+      name: req.body.name,
+      username: req.body.username,
+      email: req.body.email,
+      avatar: req.body.avatar && req.body.avatar,
+      phone: req.body.phone,
+      country: req.body.country,
+      city: req.body.city,
+    }
 
     if (!userData.username || !userData.email) {
       return res.status(400).send({ error: 'username и email обязателен!' })
     }
 
     if (req.file) {
-      userData.avatar = `uploads/${req.file.filename}`
+      userData.avatar = req.file.filename
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, userData, { new: true })
 
     if (req.user.avatar !== user.avatar) {
-      const avatar = req.user.avatar.split('/')
-
-      if (avatar[0] === 'uploads') {
-        // eslint-disable-next-line node/prefer-promises/fs
-        fs.unlink(`${config.uploadPath}/${avatar[1]}`, err => {
-          if (err) {
-            console.log(err)
-            return
-          }
-
-          console.log('Delete File successfully.')
-        })
-      }
+      deleteFile(req.user.avatar)
     }
 
     return res.send(user)

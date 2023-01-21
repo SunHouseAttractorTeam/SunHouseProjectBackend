@@ -1,15 +1,13 @@
 const express = require('express')
-
 const dayjs = require('dayjs')
 const mongoose = require('mongoose')
-const fs = require('fs')
 const Course = require('../models/Course')
 const auth = require('../middleweare/auth')
 const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
-const config = require('../config')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -245,7 +243,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
   }
 
   if (req.file) {
-    courseData.image = `uploads/${req.file.filename}`
+    courseData.image = req.file.filename
   }
 
   try {
@@ -257,19 +255,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true })
 
     if (course.image && course.image !== updateCourse.image) {
-      const oldImage = course.image.split('/')
-
-      if (oldImage[0] === 'uploads') {
-        // eslint-disable-next-line node/prefer-promises/fs
-        fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
-          if (err) {
-            console.log(err)
-            return
-          }
-
-          console.log('Delete File successfully.')
-        })
-      }
+      deleteFile(course.image)
     }
 
     return res.send(updateCourse)
@@ -313,7 +299,7 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
 
     let image
     if (req.file) {
-      image = `uploads/${req.file.filename}`
+      image = req.file.filename
     }
 
     const course = await Course.findById(id)
@@ -325,19 +311,7 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
     const updateCourse = await Course.findByIdAndUpdate(id, { headerImage: image }, { new: true })
 
     if (course.headerImage && course.headerImage !== updateCourse.headerImage) {
-      const oldImage = course.headerImage.split('/')
-
-      if (oldImage[0] === 'uploads') {
-        // eslint-disable-next-line node/prefer-promises/fs
-        fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
-          if (err) {
-            console.log(err)
-            return
-          }
-
-          console.log('Delete File successfully.')
-        })
-      }
+      deleteFile(course.headerImage)
     }
 
     return res.send({ message: 'Картинка успешно сменен!' })
@@ -354,7 +328,7 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
     const willLearn = parsedData.willLearn.map(item => {
       if (files.length) {
         if (item.image && typeof item.image !== 'string') {
-          item.image = `uploads/${files[0].filename}`
+          item.image = files[0].filename
           files.splice(0, 1)
         }
       }
@@ -385,18 +359,7 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
       for (const obj of course.willLearn) {
         if (obj.image) {
           if (updateCourse.willLearn.length === 0) {
-            const oldImage = obj.image.split('/')
-            if (oldImage[0] === 'uploads') {
-              // eslint-disable-next-line node/prefer-promises/fs
-              fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
-                if (err) {
-                  console.log(err)
-                  return
-                }
-
-                console.log('Delete File successfully.')
-              })
-            }
+            deleteFile(obj.image)
           }
 
           if (updateCourse.willLearn.length !== 0) {
@@ -407,16 +370,7 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
 
               const last = i + 2
               if (last > updateCourse.willLearn.length) {
-                const oldImage = obj.image.split('/')
-                // eslint-disable-next-line node/prefer-promises/fs
-                fs.unlink(`${config.uploadPath}/${oldImage[1]}`, err => {
-                  if (err) {
-                    console.log(err)
-                    return
-                  }
-
-                  console.log('Delete File successfully.')
-                })
+                deleteFile(obj.image)
               }
             }
           }
