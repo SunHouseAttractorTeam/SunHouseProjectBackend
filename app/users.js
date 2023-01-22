@@ -334,9 +334,10 @@ router.patch('/:id/update_status', auth, async (req, res) => {
             _id: userId,
             'tests.test': contentId,
           },
-          { $set: { 'tests.$.test': true } },
+          { $set: { 'tests.$.status': true } },
           { new: true },
         )
+        console.log(newUser)
         return res.send(newUser)
       }
       case 'lesson': {
@@ -365,7 +366,7 @@ router.patch('/:id/update_status', auth, async (req, res) => {
             _id: userId,
             'tasks.task': contentId,
           },
-          { $set: { 'tasks.$.task': true } },
+          { $set: { 'tasks.$.status': true } },
           { new: true },
         )
         return res.send(newUser)
