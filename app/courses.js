@@ -409,6 +409,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     return res.status(401).send({ message: 'Wrong token!' })
   } catch (e) {
+    console.log(e)
     return res.sendStatus(500)
   }
 })

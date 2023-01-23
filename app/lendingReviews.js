@@ -1,24 +1,11 @@
 const express = require('express')
-const path = require('path')
-const { nanoid } = require('nanoid')
-const { config } = require('dotenv')
-const multer = require('multer')
+const upload = require('../middleweare/upload')
 const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
 const Review = require('../models/LendingReview')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, config.uploadPath)
-  },
-  filename: (req, file, cb) => {
-    cb(null, nanoid() + path.extname(file.originalname))
-  },
-})
-
-const upload = multer({ storage })
 
 router.get('/', async (req, res) => {
   try {
@@ -66,7 +53,6 @@ router.post('/', auth, permit('admin'), upload.single('image'), async (req, res)
     await review.save()
     return res.send(review)
   } catch (e) {
-    console.log(e)
     return res.status(500).send({ error: e.message })
   }
 })
@@ -107,6 +93,10 @@ router.delete('/:id', auth, permit('admin'), async (req, res) => {
     }
 
     const deleteReview = await Review.findByIdAndDelete({ _id: req.params.id })
+
+    if (deleteReview.image) {
+      deleteFile(deleteReview.image)
+    }
 
     return res.send(deleteReview)
   } catch (e) {
