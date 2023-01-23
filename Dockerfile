@@ -6,4 +6,5 @@ WORKDIR /src/app/
 RUN npm i --production
 COPY ./ /src/app/
 
-CMD ["node", "index.js"]
+ENV NODE_ENV='prod'
+CMD ["npm", "start"]
