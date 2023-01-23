@@ -102,8 +102,10 @@ router.get('/:id/course', auth, searchAccesser, async (req, res) => {
     // eslint-disable-next-line no-restricted-syntax
     for (const id of testsId) {
       // eslint-disable-next-line no-await-in-loop
-      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } })
-
+      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } }).populate(
+        'tests.test',
+      )
+      console.log(userTest)
       if (userTest.tests.length !== 0) {
         if (userTest.tests[0].status === true) {
           userPassedContent.push(userTest.tests[0])
