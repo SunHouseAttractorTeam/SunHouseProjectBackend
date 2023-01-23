@@ -20,6 +20,7 @@ const Lesson = require('../models/Lesson')
 const Task = require('../models/Task')
 const Module = require('../models/Module')
 const config = require('../config')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const getLiveCookie = user => {
   const { username } = user
@@ -420,8 +421,10 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
 
     let file
     if (req.file) {
-      file = `uploads/${req.file.filename}`
+      file = req.file.filename
     }
+
+    const oldFile = await User.findOne({ _id: req.user._id }, { tasks: { $elemMatch: { task } } })
 
     const user = await User.findOneAndUpdate(
       { _id: req.user._id, 'tasks.task': task },
@@ -442,7 +445,11 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
       },
     )
 
-    return res.send({ message: 'Задание отправлено!' })
+    if (oldFile.tasks[0].file) {
+      deleteFile(oldFile.tasks[0].file)
+    }
+
+    return res.send(user)
   } catch (e) {
     return res.status(500).send(e)
   }
@@ -494,13 +501,11 @@ router.post('/forgot', async (req, res) => {
 
 router.post('/reset', async (req, res) => {
   try {
-    console.log(req.body)
     const user = await User.findOne({ resetPasswordToken: req.body.hash.hash })
 
     user.resetPasswordToken = ''
     user.resetPasswordExpires = Date.now() + 360000
 
-    console.log(req.body.hash.newPassword)
     user.password = req.body.hash.newPassword
 
     await user.save({ validateBeforeSave: false })
@@ -515,17 +520,30 @@ router.post('/reset', async (req, res) => {
 
 router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
   try {
-    const userData = req.body
+    console.log(req.body)
+    const userData = {
+      name: req.body.name,
+      username: req.body.username,
+      email: req.body.email,
+      avatar: req.body.avatar && req.body.avatar,
+      phone: req.body.phone,
+      country: req.body.country,
+      city: req.body.city,
+    }
 
     if (!userData.username || !userData.email) {
       return res.status(400).send({ error: 'username и email обязателен!' })
     }
 
     if (req.file) {
-      userData.avatar = `uploads/${req.file.filename}`
+      userData.avatar = req.file.filename
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, userData, { new: true })
+
+    if (req.user.avatar !== user.avatar) {
+      deleteFile(req.user.avatar)
+    }
 
     return res.send(user)
   } catch (e) {

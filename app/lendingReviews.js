@@ -3,6 +3,7 @@ const upload = require('../middleweare/upload')
 const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
 const Review = require('../models/LendingReview')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -37,7 +38,6 @@ router.post('/', auth, permit('admin'), upload.single('image'), async (req, res)
     await review.save()
     return res.send(review)
   } catch (e) {
-    console.log(e)
     return res.status(500).send({ error: e.message })
   }
 })
@@ -51,6 +51,10 @@ router.delete('/:id', auth, permit('admin'), async (req, res) => {
     }
 
     const deleteReview = await Review.findByIdAndDelete({ _id: req.params.id })
+
+    if (deleteReview.image) {
+      deleteFile(deleteReview.image)
+    }
 
     return res.send(deleteReview)
   } catch (e) {

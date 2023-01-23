@@ -1,5 +1,4 @@
 const express = require('express')
-
 const dayjs = require('dayjs')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
@@ -8,6 +7,7 @@ const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -247,7 +247,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
   }
 
   if (req.file) {
-    courseData.image = `uploads/${req.file.filename}`
+    courseData.image = req.file.filename
   }
 
   try {
@@ -256,7 +256,12 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
     }
-    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData)
+    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true })
+
+    if (course.image && course.image !== updateCourse.image) {
+      deleteFile(course.image)
+    }
+
     return res.send(updateCourse)
   } catch (e) {
     return res.sendStatus(500)
@@ -298,7 +303,7 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
 
     let image
     if (req.file) {
-      image = `uploads/${req.file.filename}`
+      image = req.file.filename
     }
 
     const course = await Course.findById(id)
@@ -307,7 +312,11 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
       return res.status(404).send({ message: 'Курс не найден!' })
     }
 
-    await Course.findByIdAndUpdate(id, { headerImage: image })
+    const updateCourse = await Course.findByIdAndUpdate(id, { headerImage: image }, { new: true })
+
+    if (course.headerImage && course.headerImage !== updateCourse.headerImage) {
+      deleteFile(course.headerImage)
+    }
 
     return res.send({ message: 'Картинка успешно сменен!' })
   } catch (e) {
@@ -323,7 +332,7 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
     const willLearn = parsedData.willLearn.map(item => {
       if (files.length) {
         if (item.image && typeof item.image !== 'string') {
-          item.image = `uploads/${files[0].filename}`
+          item.image = files[0].filename
           files.splice(0, 1)
         }
       }
@@ -331,13 +340,47 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
       return item
     })
 
-    await Course.findByIdAndUpdate(req.params.id, {
-      blockModules: parsedData.blockModules,
-      blockTeachers: parsedData.blockTeachers,
-      blockLearn: parsedData.blockLearn,
-      willLearn,
-      lendingTeachers: parsedData.lendingTeachers,
-    })
+    const course = await Course.findById(req.params.id)
+
+    if (!course) {
+      return res.status(404).send({ message: 'Курс не найден!' })
+    }
+
+    const updateCourse = await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        blockModules: parsedData.blockModules,
+        blockTeachers: parsedData.blockTeachers,
+        blockLearn: parsedData.blockLearn,
+        willLearn,
+        lendingTeachers: parsedData.lendingTeachers,
+      },
+      { new: true },
+    )
+
+    if (course.willLearn.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const obj of course.willLearn) {
+        if (obj.image) {
+          if (updateCourse.willLearn.length === 0) {
+            deleteFile(obj.image)
+          }
+
+          if (updateCourse.willLearn.length !== 0) {
+            for (let i = 0; i < updateCourse.willLearn.length; i += 1) {
+              if (obj.image === updateCourse.willLearn[i].image) {
+                break
+              }
+
+              const last = i + 2
+              if (last > updateCourse.willLearn.length) {
+                deleteFile(obj.image)
+              }
+            }
+          }
+        }
+      }
+    }
 
     return res.send({ message: 'Данные успешно сохранены' })
   } catch (e) {
@@ -353,6 +396,16 @@ router.delete('/:id', auth, async (req, res) => {
       const response = await Course.deleteOne({ _id: courseId })
 
       if (response.deletedCount) {
+        if (course.image) deleteFile(course.image)
+
+        if (course.headerImage) deleteFile(course.headerImage)
+
+        if (course.willLearn.length !== 0) {
+          course.willLearn.forEach(obj => {
+            if (obj.image) deleteFile(obj.image)
+          })
+        }
+
         return res.send('Success')
       }
       return res.status(403).send({ error: 'Deleted failed' })
@@ -360,6 +413,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     return res.status(401).send({ message: 'Wrong token!' })
   } catch (e) {
+    console.log(e)
     return res.sendStatus(500)
   }
 })
