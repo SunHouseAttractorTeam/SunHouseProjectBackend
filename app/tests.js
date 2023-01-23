@@ -1,6 +1,8 @@
 const express = require('express')
+
 const Test = require('../models/Test')
 const Module = require('../models/Module')
+const User = require('../models/User')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
@@ -39,7 +41,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
-    const module = await Module.findOne({ _id: moduleId })
+    const module = await Module.findById(moduleId).populate('course', 'users')
 
     if (!module) {
       return res.status(404).send({ message: 'Такого модуля нет!!' })
@@ -66,6 +68,12 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       type: test.type,
       title: test.title,
     })
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of module.course.users) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(id, { $push: { tests: { test } } })
+    }
 
     await module.save()
     return res.send(test)

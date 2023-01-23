@@ -2,6 +2,7 @@ const express = require('express')
 const auth = require('../middleweare/auth')
 const Task = require('../models/Task')
 const Module = require('../models/Module')
+const User = require('../models/User')
 const upload = require('../middleweare/upload')
 const searchAccesser = require('../middleweare/searchAccesser')
 const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
@@ -40,7 +41,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
 
   try {
     const { title } = req.body
-    const module = await Module.findById(moduleId)
+    const module = await Module.findById(moduleId).populate('course', 'users')
 
     if (!module) return res.status(401).send({ message: 'Module not found' })
 
@@ -63,6 +64,12 @@ router.post('/', auth, searchAccesser, async (req, res) => {
       type: task.type,
       title: task.title,
     })
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of module.course.users) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(id, { $push: { tasks: { task } } })
+    }
 
     await module.save()
     return res.send(task)

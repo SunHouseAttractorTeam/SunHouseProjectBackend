@@ -2,6 +2,7 @@ const express = require('express')
 const auth = require('../middleweare/auth')
 const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
+const User = require('../models/User')
 const searchAccesser = require('../middleweare/searchAccesser')
 const upload = require('../middleweare/upload')
 const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
@@ -39,8 +40,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
   const moduleId = req.query.module
   try {
     const { title } = req.body
-    const module = await Module.findById(moduleId)
-
+    const module = await Module.findById(moduleId).populate('course', 'users')
     if (!module) {
       return res.status(404).send({ message: 'There are no such module!' })
     }
@@ -64,6 +64,12 @@ router.post('/', auth, searchAccesser, async (req, res) => {
       type: lesson.type,
       title: lesson.title,
     })
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of module.course.users) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(id, { $push: { lessons: { lesson } } })
+    }
 
     await module.save()
     return res.send(lesson)

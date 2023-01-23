@@ -488,14 +488,41 @@ const run = async () => {
   await module2.updateOne({ $push: { data: { title: task7.title, type: task7.type, _id: task7._id } } })
   await module3.updateOne({ $push: { data: { title: task8.title, type: task8.type, _id: task8._id } } })
 
+  await course1.updateOne({
+    $push: {
+      pendingTasks: {
+        user: tom._id,
+        file: 'test.docx',
+        task: task3._id,
+      },
+    },
+  })
+  await course1.updateOne({
+    $push: {
+      pendingTasks: {
+        user: user._id,
+        file: 'test1.docx',
+        task: task3._id,
+      },
+    },
+  })
+
   const [test1, test2, test3, test4, test5, testHtml, testJS] = await Test.create(
     {
       title: 'test 1',
       module: module._id,
       questions: [
         {
-          title: 'это какой тест?',
-          answers: [{ title: '1', status: true }, { title: '2' }, { title: '3' }],
+          title: 'вопрос первого теста?',
+          answers: [{ title: 'ответ11', status: true }, { title: 'ответ12' }, { title: 'ответ13' }],
+        },
+        {
+          title: 'второй вопрос первого теста?',
+          answers: [{ title: 'ответ21', status: false }, { title: 'ответ22' }, { title: 'ответ23' }],
+        },
+        {
+          title: 'третий вопрос первого теста?',
+          answers: [{ title: 'ответ31', status: false }, { title: 'ответ32' }, { title: 'ответ33' }],
         },
       ],
     },
@@ -629,6 +656,48 @@ const run = async () => {
   await javascript.updateOne({ $push: { data: { title: testJS.title, type: testJS.type, _id: testJS._id } } })
   await javascript.updateOne({ $push: { data: { title: task9.title, type: task9.type, _id: task9._id } } })
 
+  await tom.updateOne({
+    $push: {
+      tests: {
+        test: test1,
+        answers: [
+          { questionId: test1.questions[0]._id, question: test1.questions[0].title, answer: true },
+          { questionId: test1.questions[1]._id, question: test1.questions[1].title, answer: false },
+          { questionId: test1.questions[2]._id, question: test1.questions[2].title, answer: false },
+        ],
+      },
+    },
+  })
+
+  await tom.updateOne({
+    $push: {
+      tests: {
+        test: test2,
+        status: true,
+        answers: [{ questionId: test2.questions[0]._id, question: test1.questions[0].title, answer: true }],
+      },
+    },
+  })
+
+  await tom.updateOne({
+    $push: {
+      tests: {
+        test: test3,
+        status: true,
+        answers: [{ questionId: test3.questions[0]._id, question: test1.questions[0].title, answer: true }],
+      },
+    },
+  })
+
+  await user.updateOne({
+    $push: {
+      tests: {
+        test: test3,
+        status: true,
+        answers: [{ questionId: test3.questions[0]._id, question: test1.questions[0].title, answer: true }],
+      },
+    },
+  })
   await Review.create(
     {
       name: 'Биба',
