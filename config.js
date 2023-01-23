@@ -6,7 +6,7 @@ module.exports = {
   rootPath,
   uploadPath: path.join(rootPath, 'public/uploads'),
   mongo: {
-    db: 'mongodb://localhost/sun_house_db',
+    db: 'mongodb+srv://user:19630185@cluster0.g0oxsth.mongodb.net/?retryWrites=true&w=majority',
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,

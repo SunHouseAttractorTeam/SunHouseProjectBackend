@@ -1,0 +1,25 @@
+version: "3"
+services:
+  eduspace-back:
+    build: ../sun-house-back
+    image: atomico592/eduspace:back
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - public_images:/src/app/public
+  eduspace-front:
+    build:
+      context: ../SunHouseProjectFrontend
+      args:
+        api_url: "http://localhost:8000"
+    image: atomico592/eduspace:front
+    depends_on:
+      - eduspace-back
+    restart: always
+    ports:
+      - "80:80"
+
+volumes:
+  public_images:
+  mongo_data:
