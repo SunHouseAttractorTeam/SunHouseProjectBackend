@@ -1,5 +1,4 @@
 const express = require('express')
-
 const dayjs = require('dayjs')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
@@ -8,17 +7,20 @@ const upload = require('../middleweare/upload')
 const User = require('../models/User')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
 router.get('/', async (req, res) => {
-  const { id } = req.query
+  const { id, userId, teacherId } = req.query
 
   if (id) {
     const course = await Course.findOne({ _id: id })
       .populate('users', 'username')
       .populate('modules', 'title data')
       .populate('lendingTeachers.user', 'username avatar')
+      .populate('pendingTasks.user', 'username email')
+      .populate('pendingTasks.task', 'title')
     const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
 
     const data = { ...course }
@@ -26,6 +28,26 @@ router.get('/', async (req, res) => {
 
     newCourse.searchTeachers = teachers.teachers
     return res.send(newCourse)
+  }
+
+  if (userId) {
+    const user = await User.findById(userId)
+
+    if (!user) return res.status(404).send('Пользователь не найден')
+
+    const courses = await Course.find({ users: user._id })
+
+    return res.send(courses)
+  }
+
+  if (teacherId) {
+    const teacher = await User.findById(teacherId)
+
+    if (!teacher) return res.status(404).send('Пользователь не найден')
+
+    const courses = await Course.find({ teachers: teacher._id })
+
+    return res.send(courses)
   }
 
   const query = {}
@@ -80,8 +102,10 @@ router.get('/:id/course', auth, searchAccesser, async (req, res) => {
     // eslint-disable-next-line no-restricted-syntax
     for (const id of testsId) {
       // eslint-disable-next-line no-await-in-loop
-      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } })
-
+      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } }).populate(
+        'tests.test',
+      )
+      console.log(userTest)
       if (userTest.tests.length !== 0) {
         if (userTest.tests[0].status === true) {
           userPassedContent.push(userTest.tests[0])
@@ -152,41 +176,40 @@ router.post('/', auth, async (req, res) => {
 
 // Добавление студетов и владельцев
 
-router.put('/add', auth, async (req, res) => {
+router.put('/:id/add', auth, async (req, res) => {
   let user = null
-  const userId = req.query.user
-  const ownerId = req.query.owner
-  const courseID = req.query.course
+  const { userId, teacherId } = req.query
+  const courseId = req.params.id
 
   try {
     if (userId) {
       user = await User.findById(userId)
     }
-    if (ownerId) {
-      user = await User.findById(ownerId)
+    if (teacherId) {
+      user = await User.findById(teacherId)
     }
     if (!user) {
       return res.status(404).send({ message: 'Такого пользователя нет!' })
     }
-    const course = await Course.findById(courseID)
+    const course = await Course.findById(courseId)
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
     }
     if (userId) {
       if (!course.users.includes(userId)) {
-        const addUsers = await Course.findByIdAndUpdate(courseID, { $push: { users: user } })
+        const addUsers = await Course.findByIdAndUpdate(courseId, { $push: { users: user._id } })
         return res.send(addUsers)
       }
     }
-    if (ownerId) {
-      if (!course.teachers.includes(ownerId)) {
-        const addOwners = await Course.findByIdAndUpdate(courseID, { $push: { owners: user } })
-        return res.send(addOwners)
+    if (teacherId) {
+      if (!course.teachers.includes(teacherId)) {
+        const addTeachers = await Course.findByIdAndUpdate(courseId, { $push: { teachers: user } })
+        return res.send(addTeachers)
       }
     }
     return res.send(course)
   } catch (e) {
-    return res.sendStatus(500)
+    return res.status(500).send(e)
   }
 })
 
@@ -204,9 +227,9 @@ router.post('/:id/publish', auth, permit('admin'), async (req, res) => {
     }
     course.publish = !course.publish
     await course.save()
-    res.send(course)
+    return res.send(course)
   } catch (e) {
-    res.status(400).send({ error: e.errors })
+    return res.status(400).send({ error: e.errors })
   }
 })
 
@@ -224,7 +247,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
   }
 
   if (req.file) {
-    courseData.image = `uploads/${req.file.filename}`
+    courseData.image = req.file.filename
   }
 
   try {
@@ -233,7 +256,12 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     if (!course) {
       return res.status(404).send({ message: 'Такого курса нет!' })
     }
-    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData)
+    const updateCourse = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true })
+
+    if (course.image && course.image !== updateCourse.image) {
+      deleteFile(course.image)
+    }
+
     return res.send(updateCourse)
   } catch (e) {
     return res.sendStatus(500)
@@ -275,7 +303,7 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
 
     let image
     if (req.file) {
-      image = `uploads/${req.file.filename}`
+      image = req.file.filename
     }
 
     const course = await Course.findById(id)
@@ -284,7 +312,11 @@ router.patch('/edit_image', auth, searchAccesser, upload.single('headerImage'), 
       return res.status(404).send({ message: 'Курс не найден!' })
     }
 
-    await Course.findByIdAndUpdate(id, { headerImage: image })
+    const updateCourse = await Course.findByIdAndUpdate(id, { headerImage: image }, { new: true })
+
+    if (course.headerImage && course.headerImage !== updateCourse.headerImage) {
+      deleteFile(course.headerImage)
+    }
 
     return res.send({ message: 'Картинка успешно сменен!' })
   } catch (e) {
@@ -300,7 +332,7 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
     const willLearn = parsedData.willLearn.map(item => {
       if (files.length) {
         if (item.image && typeof item.image !== 'string') {
-          item.image = `uploads/${files[0].filename}`
+          item.image = files[0].filename
           files.splice(0, 1)
         }
       }
@@ -308,13 +340,47 @@ router.patch('/:id/visible', auth, searchAccesser, upload.array('image'), async 
       return item
     })
 
-    await Course.findByIdAndUpdate(req.params.id, {
-      blockModules: parsedData.blockModules,
-      blockTeachers: parsedData.blockTeachers,
-      blockLearn: parsedData.blockLearn,
-      willLearn,
-      lendingTeachers: parsedData.lendingTeachers,
-    })
+    const course = await Course.findById(req.params.id)
+
+    if (!course) {
+      return res.status(404).send({ message: 'Курс не найден!' })
+    }
+
+    const updateCourse = await Course.findByIdAndUpdate(
+      req.params.id,
+      {
+        blockModules: parsedData.blockModules,
+        blockTeachers: parsedData.blockTeachers,
+        blockLearn: parsedData.blockLearn,
+        willLearn,
+        lendingTeachers: parsedData.lendingTeachers,
+      },
+      { new: true },
+    )
+
+    if (course.willLearn.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const obj of course.willLearn) {
+        if (obj.image) {
+          if (updateCourse.willLearn.length === 0) {
+            deleteFile(obj.image)
+          }
+
+          if (updateCourse.willLearn.length !== 0) {
+            for (let i = 0; i < updateCourse.willLearn.length; i += 1) {
+              if (obj.image === updateCourse.willLearn[i].image) {
+                break
+              }
+
+              const last = i + 2
+              if (last > updateCourse.willLearn.length) {
+                deleteFile(obj.image)
+              }
+            }
+          }
+        }
+      }
+    }
 
     return res.send({ message: 'Данные успешно сохранены' })
   } catch (e) {
@@ -330,6 +396,16 @@ router.delete('/:id', auth, async (req, res) => {
       const response = await Course.deleteOne({ _id: courseId })
 
       if (response.deletedCount) {
+        if (course.image) deleteFile(course.image)
+
+        if (course.headerImage) deleteFile(course.headerImage)
+
+        if (course.willLearn.length !== 0) {
+          course.willLearn.forEach(obj => {
+            if (obj.image) deleteFile(obj.image)
+          })
+        }
+
         return res.send('Success')
       }
       return res.status(403).send({ error: 'Deleted failed' })
@@ -337,6 +413,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     return res.status(401).send({ message: 'Wrong token!' })
   } catch (e) {
+    console.log(e)
     return res.sendStatus(500)
   }
 })

@@ -2,9 +2,10 @@ const express = require('express')
 const auth = require('../middleweare/auth')
 const Lesson = require('../models/Lesson')
 const Module = require('../models/Module')
-const Course = require('../models/Course')
+const User = require('../models/User')
 const searchAccesser = require('../middleweare/searchAccesser')
 const upload = require('../middleweare/upload')
+const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -39,8 +40,7 @@ router.post('/', auth, searchAccesser, async (req, res) => {
   const moduleId = req.query.module
   try {
     const { title } = req.body
-    const module = await Module.findById(moduleId)
-
+    const module = await Module.findById(moduleId).populate('course', 'users')
     if (!module) {
       return res.status(404).send({ message: 'There are no such module!' })
     }
@@ -64,6 +64,12 @@ router.post('/', auth, searchAccesser, async (req, res) => {
       type: lesson.type,
       title: lesson.title,
     })
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of module.course.users) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(id, { $push: { lessons: { lesson } } })
+    }
 
     await module.save()
     return res.send(lesson)
@@ -143,6 +149,14 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       await module.save()
     }
 
+    if (lesson.file !== updateLesson.file) {
+      deleteFile(lesson.file)
+    }
+
+    if (lesson.data.length !== 0) {
+      clearArrayFromFiles(lesson.data, updateLesson.data)
+    }
+
     return res.send(updateLesson)
   } catch (e) {
     return res.status(500).send({ error: e.message })
@@ -160,6 +174,14 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Lesson.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
+      if (lesson.file) deleteFile(lesson.file)
+
+      if (lesson.data && lesson.data.length !== 0) {
+        lesson.data.forEach(obj => {
+          if (obj.audio) deleteFile(obj.audio)
+        })
+      }
+
       const module = await Module.findById(lesson.module)
 
       if (!module) {
