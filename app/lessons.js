@@ -168,6 +168,14 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Lesson.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
+      if (lesson.file) deleteFile(lesson.file)
+
+      if (lesson.data && lesson.data.length !== 0) {
+        lesson.data.forEach(obj => {
+          if (obj.audio) deleteFile(obj.audio)
+        })
+      }
+
       const module = await Module.findById(lesson.module)
 
       if (!module) {

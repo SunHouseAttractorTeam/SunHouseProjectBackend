@@ -2,6 +2,8 @@ const fs = require('fs')
 const config = require('../config')
 
 const deleteFile = file => {
+  const fixture = file.split('/')
+  if (fixture[0] === 'fixtures') return
   // eslint-disable-next-line node/prefer-promises/fs
   fs.unlink(`${config.uploadPath}/${file}`, err => {
     if (err) {

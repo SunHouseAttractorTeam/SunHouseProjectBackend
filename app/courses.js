@@ -392,6 +392,16 @@ router.delete('/:id', auth, async (req, res) => {
       const response = await Course.deleteOne({ _id: courseId })
 
       if (response.deletedCount) {
+        if (course.image) deleteFile(course.image)
+
+        if (course.headerImage) deleteFile(course.headerImage)
+
+        if (course.willLearn.length !== 0) {
+          course.willLearn.forEach(obj => {
+            if (obj.image) deleteFile(obj.image)
+          })
+        }
+
         return res.send('Success')
       }
       return res.status(403).send({ error: 'Deleted failed' })

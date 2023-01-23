@@ -248,6 +248,14 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Test.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
+      if (test.file) deleteFile(test.file)
+
+      if (test.data && test.data.length !== 0) {
+        test.data.forEach(obj => {
+          if (obj.audio) deleteFile(obj.audio)
+        })
+      }
+
       const module = await Module.findById(test.module)
 
       if (!module) {
