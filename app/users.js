@@ -62,6 +62,72 @@ router.get('/confirm/:confirmationCode', async (req, res) => {
   }
 })
 
+router.get('/passed_course', auth, async (req, res) => {
+  try {
+    const courseId = req.query.course
+
+    const course = await Course.findById(courseId, { modules: 1 }).populate('modules')
+
+    let lastObj
+    if (course.modules.length !== 0) {
+      for (let i = course.modules.length; i > 0; i -= 1) {
+        const lastData = course.modules[i - 1].data.length
+        if (lastData) {
+          lastObj = course.modules[i - 1].data[lastData - 1]
+        }
+
+        if (lastData) {
+          break
+        }
+      }
+    }
+
+    let lastObjStatus
+    if (lastObj.type === 'task') lastObjStatus = req.user.tasks.find(obj => obj.task !== lastObj._id)
+
+    if (lastObjStatus && lastObjStatus.passed !== 'success') {
+      return res.send({ passed: false })
+    }
+
+    const modulesId = await Module.distinct('_id', { course: courseId })
+
+    const tests = await Test.find({ module: { $in: modulesId } })
+
+    let userPassed = true
+    for (let i = 0; i < tests.length; i += 1) {
+      if (!userPassed) {
+        break
+      }
+      let passed = 0
+
+      // eslint-disable-next-line no-await-in-loop
+      const userTest = await User.findOne({ _id: req.user._id }, { tests: { $elemMatch: { test: tests[i] } } })
+      if (userTest.tests.length === 0) {
+        return
+      }
+      if (userTest.tests[0].correct) {
+        for (let j = 0; j < userTest.tests[0].answers.length; j += 1) {
+          if (userTest.tests[0].answers[j].status === true) {
+            passed += 1
+          }
+
+          const last = j + 2
+          if (last > userTest.tests[0].answers.length) {
+            const totalPassed = (passed / userTest.tests[0].answers.length) * 100
+            if (totalPassed < userTest.tests[0].correct) {
+              userPassed = false
+            }
+          }
+        }
+      }
+    }
+
+    return res.send({ passed: userPassed })
+  } catch (e) {
+    return res.sendStatus(500)
+  }
+})
+
 router.post('/', async (req, res) => {
   try {
     const secretToken = getLiveSecretCookie({ email: req.body.email })
@@ -256,6 +322,23 @@ router.put('/add_course', auth, async (req, res) => {
       return res.status(404).send({ message: 'Course not found!' })
     }
 
+    if (req.user.myCourses.find(obj => obj.course !== course._id)) {
+      const lessonsId = await Lesson.distinct('_id', { module: { $in: course.modules } })
+      const tasksId = await Task.distinct('_id', { module: { $in: course.modules } })
+      const testsId = await Test.distinct('_id', { module: { $in: course.modules } })
+      await User.updateOne(
+        { _id: req.user._id },
+        {
+          $pull: {
+            myCourses: { course: courseId },
+            lessons: { lesson: { $in: lessonsId } },
+            tasks: { task: { $in: tasksId } },
+            tests: { test: { $in: testsId } },
+          },
+        },
+      )
+    }
+
     const courseUser = await User.findOne({ _id: userId }, { myCourses: { $elemMatch: { course: courseId } } })
 
     if (courseUser.myCourses.length !== 0) {
@@ -276,7 +359,7 @@ router.put('/add_course', auth, async (req, res) => {
     // eslint-disable-next-line no-restricted-syntax
     for (const test of tests) {
       // eslint-disable-next-line no-await-in-loop
-      await User.findByIdAndUpdate(userId, { $push: { tests: { test } } })
+      await User.findByIdAndUpdate(userId, { $push: { tests: { test, correct: test.correct } } })
     }
 
     // eslint-disable-next-line no-restricted-syntax
@@ -397,7 +480,7 @@ router.patch('/:id/update_status', auth, async (req, res) => {
             _id: userId,
             'tasks.task': contentId,
           },
-          { $set: { 'tasks.$.status': choice, 'tasks.$.passed': passed } },
+          { $set: { 'tasks.$.passed': passed } },
         )
 
         await Course.updateOne(
