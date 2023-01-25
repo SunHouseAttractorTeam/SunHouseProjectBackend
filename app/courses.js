@@ -75,8 +75,6 @@ router.get('/', async (req, res) => {
 
   if (req.query.category && req.query.category !== 'all') query.category = req.query.category
 
-  console.log(sort)
-
   try {
     const courses = await Course.find(query).sort(sort).populate({
       path: 'category',
