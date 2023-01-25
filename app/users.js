@@ -74,9 +74,6 @@ router.get('/passed_course', auth, async (req, res) => {
         const lastData = course.modules[i - 1].data.length
         if (lastData) {
           lastObj = course.modules[i - 1].data[lastData - 1]
-        }
-
-        if (lastData) {
           break
         }
       }
@@ -102,10 +99,8 @@ router.get('/passed_course', auth, async (req, res) => {
 
       // eslint-disable-next-line no-await-in-loop
       const userTest = await User.findOne({ _id: req.user._id }, { tests: { $elemMatch: { test: tests[i] } } })
-      if (userTest.tests.length === 0) {
-        return
-      }
-      if (userTest.tests[0].correct) {
+
+      if (userTest.tests.length && userTest.tests[0].correct) {
         for (let j = 0; j < userTest.tests[0].answers.length; j += 1) {
           if (userTest.tests[0].answers[j].status === true) {
             passed += 1
@@ -122,7 +117,23 @@ router.get('/passed_course', auth, async (req, res) => {
       }
     }
 
-    return res.send({ passed: userPassed })
+    let newUser
+    if (userPassed) {
+      newUser = await User.findOneAndUpdate(
+        {
+          _id: req.user._id,
+          'myCourses.course': courseId,
+        },
+        { $set: { 'myCourses.$.status': true } },
+        { new: true },
+      )
+    }
+
+    if (userPassed && !newUser) {
+      return res.status(404).send({ error: 'пользователь не найден!' })
+    }
+
+    return res.send({ newUser, passed: userPassed })
   } catch (e) {
     return res.sendStatus(500)
   }
@@ -393,21 +404,6 @@ router.patch('/:id/update_status', auth, async (req, res) => {
       return res.status(404).send({ message: 'User not found!' })
     }
     switch (req.query.params) {
-      case 'course': {
-        const course = await Course.findById(contentId)
-        if (!course) {
-          return res.status(404).send({ message: 'Course not found!' })
-        }
-        const newUser = await User.findOneAndUpdate(
-          {
-            _id: userId,
-            'myCourses.course': contentId,
-          },
-          { $set: { 'myCourses.$.status': true } },
-          { new: true },
-        )
-        return res.send(newUser)
-      }
       case 'test': {
         const test = await Test.findById(contentId)
         if (!test) {
@@ -421,7 +417,7 @@ router.patch('/:id/update_status', auth, async (req, res) => {
           { $set: { 'tests.$.status': true } },
           { new: true },
         )
-        console.log(newUser)
+
         return res.send(newUser)
       }
       case 'lesson': {
@@ -437,6 +433,7 @@ router.patch('/:id/update_status', auth, async (req, res) => {
           { $set: { 'lessons.$.status': true } },
           { new: true },
         )
+
         return res.send(newUser)
       }
       case 'task': {
@@ -453,6 +450,7 @@ router.patch('/:id/update_status', auth, async (req, res) => {
           { $set: { 'tasks.$.status': true } },
           { new: true },
         )
+
         return res.send(newUser)
       }
       case 'passed': {
