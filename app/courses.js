@@ -51,10 +51,32 @@ router.get('/', async (req, res) => {
   }
 
   const query = {}
+  let sort = {}
 
-  if (req.query.category) query.category = req.query.category
+  switch (req.query.sort) {
+    case 'rating':
+      sort = { rating: 1 }
+      break
+    case 'new':
+      sort = { dateTime: -1 }
+      break
+    case 'old':
+      sort = { dateTime: 1 }
+      break
+    case 'cheap':
+      sort = { price: 1 }
+      break
+    case 'expensive':
+      sort = { price: -1 }
+      break
+    default:
+      break
+  }
+
+  if (req.query.category && req.query.category !== 'all') query.category = req.query.category
+
   try {
-    const courses = await Course.find(query).sort({ dateTime: 1 }).populate({
+    const courses = await Course.find(query).sort(sort).populate({
       path: 'category',
       select: 'title',
     })
@@ -102,8 +124,10 @@ router.get('/:id/course', auth, searchAccesser, async (req, res) => {
     // eslint-disable-next-line no-restricted-syntax
     for (const id of testsId) {
       // eslint-disable-next-line no-await-in-loop
-      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } })
-
+      const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } }).populate(
+        'tests.test',
+      )
+      console.log(userTest)
       if (userTest.tests.length !== 0) {
         if (userTest.tests[0].status === true) {
           userPassedContent.push(userTest.tests[0])
