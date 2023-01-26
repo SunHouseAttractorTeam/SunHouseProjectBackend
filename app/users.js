@@ -513,7 +513,16 @@ router.put('/add_task', auth, upload.single('file'), async (req, res) => {
       { new: true },
     )
 
-    await Course.findOneAndUpdate(
+    await Course.updateOne(
+      { _id: course },
+      {
+        $pull: {
+          pendingTasks: { user: req.user._id, task },
+        },
+      },
+    )
+
+    await Course.updateOne(
       { _id: course },
       {
         $push: {
