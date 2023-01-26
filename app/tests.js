@@ -2,10 +2,12 @@ const express = require('express')
 
 const Test = require('../models/Test')
 const Module = require('../models/Module')
+const User = require('../models/User')
 const auth = require('../middleweare/auth')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
 const upload = require('../middleweare/upload')
+const { clearArrayFromFiles, deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -39,7 +41,7 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
   const moduleId = req.query.module
 
   try {
-    const module = await Module.findOne({ _id: moduleId })
+    const module = await Module.findById(moduleId).populate('course', 'users')
 
     if (!module) {
       return res.status(404).send({ message: 'Такого модуля нет!!' })
@@ -66,6 +68,12 @@ router.post('/', auth, permit('admin', 'user'), async (req, res) => {
       type: test.type,
       title: test.title,
     })
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of module.course.users) {
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(id, { $push: { tests: { test } } })
+    }
 
     await module.save()
     return res.send(test)
@@ -158,6 +166,14 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       await module.save()
     }
 
+    if (test.file !== updateTest.file) {
+      deleteFile(test.file)
+    }
+
+    if (test.data.length !== 0) {
+      clearArrayFromFiles(test.data, updateTest.data)
+    }
+
     return res.send(updateTest)
   } catch (e) {
     return res.sendStatus(500)
@@ -240,6 +256,14 @@ router.delete('/:id', auth, searchAccesser, async (req, res) => {
     const response = await Test.deleteOne({ _id: req.params.id })
 
     if (response.deletedCount) {
+      if (test.file) deleteFile(test.file)
+
+      if (test.data && test.data.length !== 0) {
+        test.data.forEach(obj => {
+          if (obj.audio) deleteFile(obj.audio)
+        })
+      }
+
       const module = await Module.findById(test.module)
 
       if (!module) {

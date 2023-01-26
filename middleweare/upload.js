@@ -1,5 +1,4 @@
 const multer = require('multer')
-const path = require('path')
 const { nanoid } = require('nanoid')
 const config = require('../config')
 
@@ -8,7 +7,9 @@ const storage = multer.diskStorage({
     cb(null, config.uploadPath)
   },
   filename: (req, file, cb) => {
-    cb(null, nanoid() + path.extname(file.originalname))
+    const re = / /g
+    const newstr = file.originalname.replace(re, '-')
+    cb(null, nanoid(10) + newstr)
   },
 })
 
