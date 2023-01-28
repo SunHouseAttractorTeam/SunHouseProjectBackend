@@ -147,7 +147,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       await module.save()
     }
 
-    if (task.file !== updateTask.file) {
+    if (task.file && task.file !== updateTask.file) {
       deleteFile(task.file)
     }
 

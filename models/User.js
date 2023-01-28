@@ -38,6 +38,7 @@ const Tests = new Schema({
     type: Boolean,
     default: false,
   },
+  correct: Number,
   answers: [],
 })
 

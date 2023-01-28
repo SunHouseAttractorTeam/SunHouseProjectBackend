@@ -149,7 +149,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       await module.save()
     }
 
-    if (lesson.file !== updateLesson.file) {
+    if (lesson.file && lesson.file !== updateLesson.file) {
       deleteFile(lesson.file)
     }
 

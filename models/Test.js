@@ -31,6 +31,7 @@ const TestSchema = new Schema({
     type: Number,
     min: 0,
     max: 100,
+    default: 100,
   },
   questions: [QuestionSchema],
   file: String,

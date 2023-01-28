@@ -166,7 +166,7 @@ router.put('/:id', auth, searchAccesser, upload.any(), async (req, res) => {
       await module.save()
     }
 
-    if (test.file !== updateTest.file) {
+    if (test.file && test.file !== updateTest.file) {
       deleteFile(test.file)
     }
 
@@ -211,6 +211,7 @@ router.patch('/:id', auth, async (req, res) => {
                   questionId: userQuestion.question,
                   question: obj.questions[0].title,
                   status: answer,
+                  answerId: userQuestion.answer,
                 })
               }
               return testObj
@@ -228,14 +229,6 @@ router.patch('/:id', auth, async (req, res) => {
         }
       }
     }
-
-    user.tests = await Promise.all(
-      user.tests.map(testObj => {
-        // eslint-disable-next-line no-return-assign
-        if (testObj.test.equals(testId)) return (testObj.status = true)
-        return testObj
-      }),
-    )
 
     await user.save({ validateBeforeSave: false })
 
