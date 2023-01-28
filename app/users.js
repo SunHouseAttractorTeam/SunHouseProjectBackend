@@ -250,7 +250,7 @@ router.post('/sessions', async (req, res) => {
       const api = new VKAPI({
         accessToken: req.body.session.sid,
       })
-      console.log('vk')
+
       const { user } = req.body.session
       const ticket = await api.users.get({ user_ids: [user.id], fields: ['photo_max_orig'] })
 
@@ -631,7 +631,7 @@ router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
 
     const user = await User.findByIdAndUpdate(req.user._id, userData, { new: true })
 
-    if (req.user.avatar !== user.avatar) {
+    if (req.user.avatar && req.user.avatar !== user.avatar) {
       deleteFile(req.user.avatar)
     }
 
