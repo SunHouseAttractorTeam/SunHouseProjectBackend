@@ -16,6 +16,7 @@ const RatingSchema = new Schema({
     type: Number,
     min: 0,
     max: 5,
+    default: 0,
   },
   instagram: {
     type: String,
@@ -35,6 +36,12 @@ const CourseSchema = new Schema({
     required: { message: 'Введите название' },
   },
   rating: [RatingSchema],
+  avgRating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    default: 0,
+  },
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   teachers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   lendingTeachers: [

@@ -12,74 +12,81 @@ const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 const router = express.Router()
 
 router.get('/', async (req, res) => {
-  const { id, userId, teacherId } = req.query
-
-  if (id) {
-    const course = await Course.findOne({ _id: id })
-      .populate('users', 'username')
-      .populate('modules', 'title data')
-      .populate('lendingTeachers.user', 'username avatar')
-      .populate('pendingTasks.user', 'username email')
-      .populate('pendingTasks.task', 'title')
-    const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
-
-    const data = { ...course }
-    const newCourse = { ...data._doc }
-
-    newCourse.searchTeachers = teachers.teachers
-    return res.send(newCourse)
-  }
-
-  if (userId) {
-    const user = await User.findById(userId)
-
-    if (!user) return res.status(404).send('Пользователь не найден')
-
-    const courses = await Course.find({ users: user._id })
-
-    return res.send(courses)
-  }
-
-  if (teacherId) {
-    const teacher = await User.findById(teacherId)
-
-    if (!teacher) return res.status(404).send('Пользователь не найден')
-
-    const courses = await Course.find({ teachers: teacher._id })
-
-    return res.send(courses)
-  }
-
-  const query = {}
-  let sort = {}
-
-  switch (req.query.sort) {
-    case 'rating':
-      sort = { rating: 1 }
-      break
-    case 'new':
-      sort = { dateTime: -1 }
-      break
-    case 'old':
-      sort = { dateTime: 1 }
-      break
-    case 'cheap':
-      sort = { price: 1 }
-      break
-    case 'expensive':
-      sort = { price: -1 }
-      break
-    default:
-      break
-  }
-
-  if (req.query.category && req.query.category !== 'all') query.category = req.query.category
-
   try {
+    const { id, userId, teacherId } = req.query
+
+    if (id) {
+      const course = await Course.findOne({ _id: id })
+        .populate('users', 'username')
+        .populate('modules', 'title data')
+        .populate('lendingTeachers.user', 'username avatar')
+        .populate('pendingTasks.user', 'username email')
+        .populate('pendingTasks.task', 'title')
+      const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
+
+      const data = { ...course }
+      const newCourse = { ...data._doc }
+
+      newCourse.searchTeachers = teachers.teachers
+      return res.send(newCourse)
+    }
+
+    if (userId) {
+      const user = await User.findById(userId)
+
+      if (!user) return res.status(404).send('Пользователь не найден')
+
+      const courses = await Course.find({ users: user._id })
+
+      return res.send(courses)
+    }
+
+    if (teacherId) {
+      const teacher = await User.findById(teacherId)
+
+      if (!teacher) return res.status(404).send('Пользователь не найден')
+
+      const courses = await Course.find({ teachers: teacher._id })
+
+      return res.send(courses)
+    }
+
+    const query = { publish: true }
+    let sort = {}
+
+    const token = req.cookies.jwt
+
+    const user = await User.findOne({ token })
+
+    if (user && user.role === 'admin') delete query.publish
+
+    switch (req.query.sort) {
+      case 'rating':
+        sort = { avgRating: -1 }
+        break
+      case 'new':
+        sort = { dateTime: -1 }
+        break
+      case 'old':
+        sort = { dateTime: 1 }
+        break
+      case 'cheap':
+        sort = { price: 1 }
+        break
+      case 'expensive':
+        sort = { price: -1 }
+        break
+      default:
+        break
+    }
+
+    if (req.query.category && req.query.category !== 'all') query.category = req.query.category
+
     const courses = await Course.find(query).sort(sort).populate({
       path: 'category',
       select: 'title',
     })
+
     return res.send(courses)
   } catch (e) {
     return res.sendStatus(500)
@@ -127,7 +134,7 @@ router.get('/:id/course', auth, searchAccesser, async (req, res) => {
       const userTest = await User.findOne({ _id: userId }, { tests: { $elemMatch: { test: id } } }).populate(
         'tests.test',
       )
-      console.log(userTest)
+
       if (userTest.tests.length !== 0) {
         if (userTest.tests[0].status === true) {
           userPassedContent.push(userTest.tests[0])
@@ -292,9 +299,10 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 
 // Добавление рейтинга
 
-router.post('/rating_course', auth, async (req, res) => {
+router.post('/:id/rating_course', auth, async (req, res) => {
   try {
-    const { id, rating } = req.body
+    const { id } = req.params
+    const { rating, instagram, review } = req.body
     if (!rating) {
       return res.status(400).send('Data not valid')
     }
@@ -302,7 +310,7 @@ router.post('/rating_course', auth, async (req, res) => {
     const course = await Course.find({ _id: id, rating: { $elemMatch: { user: req.user._id } } })
 
     if (course.length === 0) {
-      const newRating = { value: rating, user: req.user._id }
+      const newRating = { value: rating, user: req.user._id, instagram, review }
       await Course.updateOne({ _id: id }, { $push: { rating: newRating } })
     } else {
       await Course.updateOne({ _id: id, 'rating.user': req.user._id }, { $set: { 'rating.$.value': rating } })
@@ -313,7 +321,9 @@ router.post('/rating_course', auth, async (req, res) => {
       { $addFields: { ratingAverage: { $avg: '$rating.value' } } },
     ])
 
-    return res.send(updatedRating[0])
+    const newCourse = await Course.findByIdAndUpdate(id, { avgRating: updatedRating[0].ratingAverage }, { new: true })
+
+    return res.send(newCourse)
   } catch (e) {
     return res.sendStatus(500)
   }
@@ -435,7 +445,6 @@ router.delete('/:id', auth, async (req, res) => {
 
     return res.status(401).send({ message: 'Wrong token!' })
   } catch (e) {
-    console.log(e)
     return res.sendStatus(500)
   }
 })
