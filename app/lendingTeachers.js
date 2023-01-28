@@ -3,6 +3,7 @@ const upload = require('../middleweare/upload')
 const permit = require('../middleweare/permit')
 const auth = require('../middleweare/auth')
 const Teachers = require('../models/LendingTeachers')
+const { deleteFile } = require('../middleweare/clearArrayFromFiles')
 
 const router = express.Router()
 
@@ -29,14 +30,13 @@ router.post('/', auth, permit('admin'), upload.single('image'), async (req, res)
       image: null,
     }
     if (req.file) {
-      teachersData.image = `uploads/${req.file.filename}`
+      teachersData.image = req.file.filename
     }
 
     const teachers = new Teachers(teachersData)
     await teachers.save()
     return res.send(teachers)
   } catch (e) {
-    console.log(e)
     return res.status(500).send({ error: e.message })
   }
 })
@@ -50,6 +50,10 @@ router.delete('/:id', auth, permit('admin'), async (req, res) => {
     }
 
     const deleteTeacher = await Teachers.findByIdAndDelete({ _id: req.params.id })
+
+    if (deleteTeacher.image) {
+      deleteFile(deleteTeacher.image)
+    }
 
     return res.send(deleteTeacher)
   } catch (e) {

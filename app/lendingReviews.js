@@ -31,7 +31,7 @@ router.post('/', auth, permit('admin'), upload.single('image'), async (req, res)
       image: null,
     }
     if (req.file) {
-      reviewData.image = `uploads/${req.file.filename}`
+      reviewData.image = req.file.filename
     }
 
     const review = new Review(reviewData)
