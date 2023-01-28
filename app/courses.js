@@ -8,6 +8,10 @@ const User = require('../models/User')
 const permit = require('../middleweare/permit')
 const searchAccesser = require('../middleweare/searchAccesser')
 const { deleteFile } = require('../middleweare/clearArrayFromFiles')
+const Module = require('../models/Module')
+const Test = require('../models/Test')
+const Task = require('../models/Task')
+const Lesson = require('../models/Lesson')
 
 const router = express.Router()
 
@@ -227,6 +231,39 @@ router.put('/:id/add', auth, async (req, res) => {
     if (userId) {
       if (!course.users.includes(userId)) {
         const addUsers = await Course.findByIdAndUpdate(courseId, { $push: { users: user._id } })
+
+        const courseUser = await User.findOne({ _id: userId }, { myCourses: { $elemMatch: { course: courseId } } })
+
+        if (courseUser.myCourses.length !== 0) {
+          return res.status(400).send({ message: 'Пользователь уже подписан на этот курс' })
+        }
+
+        await User.findByIdAndUpdate(userId, { $push: { myCourses: { course } } })
+
+        const modulesId = await Module.distinct('_id', { course: courseId })
+
+        const tests = await Test.find({ module: { $in: modulesId } })
+        const tasks = await Task.find({ module: { $in: modulesId } })
+        const lessons = await Lesson.find({ module: { $in: modulesId } })
+
+        // eslint-disable-next-line no-restricted-syntax
+        for (const test of tests) {
+          // eslint-disable-next-line no-await-in-loop
+          await User.findByIdAndUpdate(userId, { $push: { tests: { test, correct: test.correct } } })
+        }
+
+        // eslint-disable-next-line no-restricted-syntax
+        for (const task of tasks) {
+          // eslint-disable-next-line no-await-in-loop
+          await User.findByIdAndUpdate(userId, { $push: { tasks: { task } } })
+        }
+
+        // eslint-disable-next-line no-restricted-syntax
+        for (const lesson of lessons) {
+          // eslint-disable-next-line no-await-in-loop
+          await User.findByIdAndUpdate(userId, { $push: { lessons: { lesson } } })
+        }
+
         return res.send(addUsers)
       }
     }
