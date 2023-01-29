@@ -333,23 +333,6 @@ router.put('/add_course', auth, async (req, res) => {
       return res.status(404).send({ message: 'Course not found!' })
     }
 
-    if (req.user.myCourses.find(obj => obj.course !== course._id)) {
-      const lessonsId = await Lesson.distinct('_id', { module: { $in: course.modules } })
-      const tasksId = await Task.distinct('_id', { module: { $in: course.modules } })
-      const testsId = await Test.distinct('_id', { module: { $in: course.modules } })
-      await User.updateOne(
-        { _id: req.user._id },
-        {
-          $pull: {
-            myCourses: { course: courseId },
-            lessons: { lesson: { $in: lessonsId } },
-            tasks: { task: { $in: tasksId } },
-            tests: { test: { $in: testsId } },
-          },
-        },
-      )
-    }
-
     const courseUser = await User.findOne({ _id: userId }, { myCourses: { $elemMatch: { course: courseId } } })
 
     if (courseUser.myCourses.length !== 0) {
@@ -610,7 +593,6 @@ router.post('/reset', async (req, res) => {
 
 router.put('/edit', auth, upload.single('avatar'), async (req, res) => {
   try {
-    console.log(req.body)
     const userData = {
       name: req.body.name,
       username: req.body.username,
@@ -706,6 +688,10 @@ router.delete('/:id', auth, permit('admin'), async (req, res) => {
     }
 
     await User.deleteOne({ _id: userId })
+
+    if (user.avatar) {
+      deleteFile(user.avatar)
+    }
 
     return res.send({ message: 'Пользователь удалён' })
   } catch {
