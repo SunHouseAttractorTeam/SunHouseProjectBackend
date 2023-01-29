@@ -18,15 +18,51 @@ const router = express.Router()
 router.get('/', async (req, res) => {
   try {
     const { id, userId, teacherId } = req.query
+    const query = { private: true, publish: true }
+    const token = req.cookies.jwt
+
+    const user = await User.findOne({ token })
+
+    if (user && user.role === 'admin') {
+      delete query.publish
+      delete query.private
+    }
 
     if (id) {
-      const course = await Course.findOne({ _id: id })
+      const usersCourse = await Course.findOne({ _id: id }, { users: 1, teachers: 1 })
+
+      if (usersCourse && user) {
+        let check = false
+        if (usersCourse.teachers && usersCourse.teachers.length) {
+          usersCourse.teachers.forEach(teacher => {
+            if (user._id.equals(teacher)) {
+              delete query.private
+              delete query.publish
+              check = true
+            }
+          })
+        }
+        if (!check && usersCourse.users && usersCourse.users.length) {
+          usersCourse.users.forEach(userCheckId => {
+            if (user._id.equals(userCheckId)) {
+              delete query.private
+              delete query.publish
+            }
+          })
+        }
+      }
+
+      const course = await Course.findOne({ _id: id, ...query })
         .populate('users', 'username')
         .populate('modules', 'title data')
         .populate('lendingTeachers.user', 'username avatar')
         .populate('pendingTasks.user', 'username email')
         .populate('pendingTasks.task', 'title')
-      const teachers = await Course.findOne({ _id: id }, { teachers: 1 }).populate('teachers', 'username avatar email')
+
+      const teachers = await Course.findOne({ _id: id, ...query }, { teachers: 1 }).populate(
+        'teachers',
+        'username avatar email',
+      )
 
       const data = { ...course }
       const newCourse = { ...data._doc }
@@ -36,11 +72,11 @@ router.get('/', async (req, res) => {
     }
 
     if (userId) {
-      const user = await User.findById(userId)
+      const currentUser = await User.findById(userId)
 
-      if (!user) return res.status(404).send('Пользователь не найден')
+      if (!currentUser) return res.status(404).send('Пользователь не найден')
 
-      const courses = await Course.find({ users: user._id })
+      const courses = await Course.find({ users: currentUser._id })
 
       return res.send(courses)
     }
@@ -55,14 +91,7 @@ router.get('/', async (req, res) => {
       return res.send(courses)
     }
 
-    const query = { publish: true }
     let sort = {}
-
-    const token = req.cookies.jwt
-
-    const user = await User.findOne({ token })
-
-    if (user && user.role === 'admin') delete query.publish
 
     switch (req.query.sort) {
       case 'rating':
