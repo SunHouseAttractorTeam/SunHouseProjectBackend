@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
       }
 
       const course = await Course.findOne({ _id: id, ...query })
-        .populate('users', 'username')
+        .populate('users', 'username email')
         .populate('modules', 'title data')
         .populate('lendingTeachers.user', 'username avatar')
         .populate('pendingTasks.user', 'username email')
