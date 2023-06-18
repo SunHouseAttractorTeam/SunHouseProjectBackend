@@ -27,7 +27,7 @@ app.use(
   cors({
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
-    origin: ['http://188.226.169.8', 'http://188.226.169.8:81', 'http://188.226.169.8:8080'],
+    origin: ['http://165.232.90.53.8', 'http://165.232.90.53:81', 'http://165.232.90.53:8080'],
   }),
 )
 

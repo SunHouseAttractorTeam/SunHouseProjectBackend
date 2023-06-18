@@ -1,19 +1,20 @@
 version: "3"
 
-
 networks:
   eduspace:
     external: true
 
 services:
   eduspace-back:
-    build: ../sun-house-back
     image: atomico592/eduspace:back
     restart: always
     ports:
       - "8000:8000"
     volumes:
       - public_images:/src/app/public
+    networks:
+      - eduspace
+
   nginx:
     container_name: nginx
     image: nginx:1.18-alpine
@@ -28,6 +29,7 @@ services:
     restart: always
     networks:
       - eduspace
+
   nginx-gen:
     container_name: nginx-gen
     image: jwilder/docker-gen
@@ -68,10 +70,6 @@ services:
       - nginx-gen
 
   eduspace-front:
-    build:
-      context: ../SunHouseProjectFrontend
-      args:
-        api_url: "http://backend:8000"
     container_name: frontend
     restart: always
     image: atomico592/eduspace:front
